@@ -9,21 +9,17 @@ print("Current working directory:", os.getcwd())
 current_path = os.path.dirname(__file__)              # 현재 실행 파일의 경로
 resources_path = os.path.join(current_path, 'resources')  # resources 폴더 경로
 
-print("Resources path:", resources_path)
-
+# 캔버스 열기
 open_canvas(800, 600)
 
 # 이미지 로드
-image_path = os.path.join(resources_path, 'Grass.png')
-print("Trying to load image from:", image_path)
+Grass_image_path = os.path.join(resources_path, 'Grass.png')
+print("Trying to load image from:", Grass_image_path)
 
-background_image = load_image(image_path)
+background_image = load_image(Grass_image_path)
+background_image.clip_draw(0, 0, 32, 32, 400, 300, 50, 50)
 
-if background_image is None:
-    print("❌ Failed to load image. Check if the file exists:", image_path)
-else:
-    background_image.draw(400, 300)
-    update_canvas()
-    delay(5)
+update_canvas()
+delay(5)
 
 close_canvas()
