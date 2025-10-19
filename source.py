@@ -1,5 +1,6 @@
 from pico2d import *
 import os
+from witch import Witch
 
 # 상수
 TILE_WIDTH = 16
@@ -11,19 +12,13 @@ resources_path = os.path.join(current_path, 'resources')
 grass_file = os.path.join(resources_path, 'grass.png')
 witch_file = os.path.join(resources_path, 'B_witch_run.png')
 
+# 리소스 파일 확인
+if not os.path.exists(grass_file):
+    raise FileNotFoundError("리소스 파일을 찾을 수 없습니다: {}".format(grass_file))
+if not os.path.exists(witch_file):
+    raise FileNotFoundError("리소스 파일을 찾을 수 없습니다: {}".format(witch_file))
+
 open_canvas(800, 600)
-
-class Witch:
-    def __init__(self):
-        self.image = load_image(witch_file)
-        self.x = 400
-        self.y = 300
-        self.frame = 0
-    def update(self):
-        self.frame = (self.frame + 1) % 8
-    def draw(self):
-        self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
-
 
 class TileSet:
     def __init__(self, path, tile_w, tile_h):
@@ -47,7 +42,8 @@ class TileSet:
 
 # 타일셋 불러오기
 tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
-witch = Witch()
+# Witch 인스턴스는 외부 모듈에서 생성
+witch = Witch(witch_file)
 
 # 예시용 맵 데이터 (8x6)
 maps = [(1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1)]
@@ -60,12 +56,24 @@ def draw_map():
             y = (len(maps) - 1 - row) * TILE_SIZE + TILE_SIZE // 2
             tileset.draw_tile(tile_index, x, y, TILE_SIZE)
 
-while True:
-    clear_canvas()
-    draw_map()
-    witch.update()
-    witch.draw()
-    update_canvas()
-    delay(1)
+running = True
+try:
+    while running:
+        events = get_events()
+        for e in events:
+            if e.type == SDL_QUIT:
+                running = False
+            elif e.type == SDL_KEYDOWN and e.key == SDLK_ESCAPE:
+                running = False
 
-close_canvas()
+        clear_canvas()
+        draw_map()
+        witch.update()
+        witch.draw()
+        update_canvas()
+        delay(0.1)
+except KeyboardInterrupt:
+    # Ctrl+C로 종료 가능
+    pass
+finally:
+    close_canvas()
