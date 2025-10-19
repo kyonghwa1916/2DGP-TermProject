@@ -9,8 +9,21 @@ TILE_SIZE = 100
 current_path = os.path.dirname(__file__)
 resources_path = os.path.join(current_path, 'resources')
 grass_file = os.path.join(resources_path, 'grass.png')
+witch_file = os.path.join(resources_path, 'B_witch_run.png')
 
 open_canvas(800, 600)
+
+class Witch:
+    def __init__(self):
+        self.image = load_image(witch_file)
+        self.x = 400
+        self.y = 300
+        self.frame = 0
+    def update(self):
+        self.frame = (self.frame + 1) % 8
+    def draw(self):
+        self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
+
 
 class TileSet:
     def __init__(self, path, tile_w, tile_h):
@@ -34,6 +47,7 @@ class TileSet:
 
 # 타일셋 불러오기
 tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
+witch = Witch()
 
 # 예시용 맵 데이터 (8x6)
 maps = [(1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1)]
@@ -49,6 +63,8 @@ def draw_map():
 while True:
     clear_canvas()
     draw_map()
+    witch.update()
+    witch.draw()
     update_canvas()
     delay(1)
 
