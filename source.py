@@ -1,41 +1,55 @@
 from pico2d import *
-import random
 import os
 
+# 상수
+TILE_WIDTH = 16
+TILE_HEIGHT = 16
+TILE_SIZE = 100
 
+current_path = os.path.dirname(__file__)
+resources_path = os.path.join(current_path, 'resources')
+grass_file = os.path.join(resources_path, 'grass.png')
 
-# 현재 작업 디렉토리 확인
-print("Current working directory:", os.getcwd())
-
-# 실행 중인 파일의 디렉토리 기준으로 경로 설정
-current_path = os.path.dirname(__file__)              # 현재 실행 파일의 경로
-resources_path = os.path.join(current_path, 'resources')  # resources 폴더 경로
-
-# 상수 선언
-GRASS_WIDTH = 176
-GRASS_HEIGHT = 112
-TILE_SIZE = 16
-
-# 캔버스 열기
 open_canvas(800, 600)
 
-# 이미지 로드
-Grass_image_path = os.path.join(resources_path, 'Grass.png')
-print("Trying to load image from:", Grass_image_path)
+class TileSet:
+    def __init__(self, path, tile_w, tile_h):
+        self.image = load_image(path)
+        self.tile_w = tile_w
+        self.tile_h = tile_h
+        self.tiles = []
 
-background_image = load_image(Grass_image_path)
+        image_w = self.image.w
+        image_h = self.image.h
 
-# 타일을 10x10 그리드로 출력
-for row in range(10):
-    for col in range(10):
-        sx = (col * TILE_SIZE) % GRASS_WIDTH
-        sy = (row * TILE_SIZE) % GRASS_HEIGHT
-        x = 50 + col * 40
-        y = 500 - row * 40
-        background_image.clip_draw(sx, sy, TILE_SIZE, TILE_SIZE, x, y, 32, 32)
+        # 타일 번호를 2D 배열처럼 저장
+        for y in range(0, image_h, tile_h):
+            for x in range(0, image_w, tile_w):
+                self.tiles.append((x, y))
 
-update_canvas()
-while(1):
-    delay(5)
+    def draw_tile(self, tile_index, x, y, size):
+        left, bottom = self.tiles[tile_index]
+        self.image.clip_draw(left, bottom, self.tile_w, self.tile_h,
+                             x, y, size, size)
+
+# 타일셋 불러오기
+tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
+
+# 예시용 맵 데이터 (8x6)
+maps = [(1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1)]
+
+def draw_map():
+    for row in range(len(maps)):
+        for col in range(len(maps[row])):
+            tile_index = maps[row][col]
+            x = col * TILE_SIZE + TILE_SIZE // 2
+            y = (len(maps) - 1 - row) * TILE_SIZE + TILE_SIZE // 2
+            tileset.draw_tile(tile_index, x, y, TILE_SIZE)
+
+while True:
+    clear_canvas()
+    draw_map()
+    update_canvas()
+    delay(1)
 
 close_canvas()
