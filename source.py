@@ -7,19 +7,17 @@ TILE_WIDTH = 16
 TILE_HEIGHT = 16
 TILE_SIZE = 100
 
-current_path = os.path.dirname(__file__)
-resources_path = os.path.join(current_path, 'resources')
-grass_file = os.path.join(resources_path, 'grass.png')
-witch_file = os.path.join(resources_path, 'B_witch_run.png')
+# 모듈 전역 리소스(초기화 시 설정됨)
+tileset = None
+witch = None
+maps = [(1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1)]
 
-# 리소스 파일 확인
-if not os.path.exists(grass_file):
-    raise FileNotFoundError("리소스 파일을 찾을 수 없습니다: {}".format(grass_file))
-if not os.path.exists(witch_file):
-    raise FileNotFoundError("리소스 파일을 찾을 수 없습니다: {}".format(witch_file))
-
-open_canvas(800, 600)
-
+# 타일셋 클래스
 class TileSet:
     def __init__(self, path, tile_w, tile_h):
         self.image = load_image(path)
@@ -36,19 +34,18 @@ class TileSet:
                 self.tiles.append((x, y))
 
     def draw_tile(self, tile_index, x, y, size):
+        # 안전하게 인덱스 범위를 체크
+        if tile_index < 0 or tile_index >= len(self.tiles):
+            return
         left, bottom = self.tiles[tile_index]
         self.image.clip_draw(left, bottom, self.tile_w, self.tile_h,
                              x, y, size, size)
 
-# 타일셋 불러오기
-tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
-# Witch 인스턴스는 외부 모듈에서 생성
-witch = Witch(witch_file)
-
-# 예시용 맵 데이터 (8x6)
-maps = [(1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 1, 1)]
 
 def draw_map():
+    global tileset, maps
+    if tileset is None:
+        return
     for row in range(len(maps)):
         for col in range(len(maps[row])):
             tile_index = maps[row][col]
@@ -56,24 +53,68 @@ def draw_map():
             y = (len(maps) - 1 - row) * TILE_SIZE + TILE_SIZE // 2
             tileset.draw_tile(tile_index, x, y, TILE_SIZE)
 
-running = True
-try:
-    while running:
-        events = get_events()
-        for e in events:
-            if e.type == SDL_QUIT:
-                running = False
-            elif e.type == SDL_KEYDOWN and e.key == SDLK_ESCAPE:
-                running = False
 
-        clear_canvas()
-        draw_map()
+# --- 공개 API: init / handle_events / update / render / cleanup ---
+
+def init(width=800, height=600):
+    """리소스 로드 및 캔버스 열기"""
+    global tileset, witch
+
+    current_path = os.path.dirname(__file__)
+    resources_path = os.path.join(current_path, 'resources')
+    # 실제 리소스 폴더의 파일명 대소문자에 맞게 지정
+    grass_file_candidates = ['grass.png', 'Grass.png']
+    witch_file_candidates = ['B_witch_run.png']
+
+    # 찾기 유틸
+    def find_file(folder, candidates):
+        for name in candidates:
+            p = os.path.join(folder, name)
+            if os.path.exists(p):
+                return p
+        return None
+
+    grass_file = find_file(resources_path, grass_file_candidates)
+    witch_file = find_file(resources_path, witch_file_candidates)
+
+    if grass_file is None:
+        raise FileNotFoundError(f"리소스 파일을 찾을 수 없습니다: {grass_file_candidates}")
+    if witch_file is None:
+        raise FileNotFoundError(f"리소스 파일을 찾을 수 없습니다: {witch_file_candidates}")
+
+    open_canvas(width, height)
+
+    tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
+    witch = Witch(witch_file)
+
+
+def handle_events():
+    """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
+    events = get_events()
+    for e in events:
+        if e.type == SDL_QUIT:
+            return False
+        elif e.type == SDL_KEYDOWN and e.key == SDLK_ESCAPE:
+            return False
+    return True
+
+
+def update():
+    global witch
+    if witch:
         witch.update()
+
+
+def render():
+    clear_canvas()
+    draw_map()
+    if witch:
         witch.draw()
-        update_canvas()
-        delay(0.1)
-except KeyboardInterrupt:
-    # Ctrl+C로 종료 가능
-    pass
-finally:
+    update_canvas()
+
+
+def cleanup():
     close_canvas()
+
+
+# end of source.py
