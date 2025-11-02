@@ -9,12 +9,13 @@ from item import Item
 TILE_WIDTH = 16
 TILE_HEIGHT = 16
 TILE_SIZE = 100
+PICKUP_RADIUS = 48  # 픽셀 단위 충돌/획득 반경
 
 # 모듈 전역 리소스(초기화 시 설정됨)
 tileset = None
 witch = None
-apple = None
-blue_item = None
+# world_items: 화면에 놓인 Item/Fruit 인스턴스 목록
+world_items = []
 # 이동 플래그
 move_up = False
 move_down = False
@@ -65,11 +66,46 @@ def draw_map():
             tileset.draw_tile(tile_index, x, y, TILE_SIZE)
 
 
-# --- 공개 API: init / handle_events / update / render / cleanup ---
+# --- world item helpers ---
+def spawn_world_item(item, x, y):
+    """월드에 아이템을 배치합니다. 이미지 로드를 시도하고 좌표를 설정한 뒤 world_items에 추가합니다."""
+    try:
+        if hasattr(item, 'load'):
+            item.load()
+        elif hasattr(item, '_ensure_image_loaded'):
+            item._ensure_image_loaded()
+    except FileNotFoundError:
+        pass
+    item.x = x
+    item.y = y
+    world_items.append(item)
 
+
+def remove_world_item(item):
+    if item in world_items:
+        world_items.remove(item)
+
+
+def find_nearest_item(x, y, max_dist=48):
+    nearest = None
+    nearest_dist = None
+    for it in world_items:
+        try:
+            dx = it.x - x
+            dy = it.y - y
+        except Exception:
+            continue
+        d = math.hypot(dx, dy)
+        if d <= max_dist and (nearest is None or d < nearest_dist):
+            nearest = it
+            nearest_dist = d
+    return nearest
+
+
+# --- 공개 API: init / handle_events / update / render / cleanup ---
 def init(width=800, height=600):
     """리소스 로드 및 캔버스 열기"""
-    global tileset, witch, apple, blue_item, move_up, move_down, move_left, move_right
+    global tileset, witch, world_items, move_up, move_down, move_left, move_right
 
     current_path = os.path.dirname(__file__)
     resources_path = os.path.join(current_path, 'resources')
@@ -101,23 +137,19 @@ def init(width=800, height=600):
     # 이동 플래그 초기화
     move_up = move_down = move_left = move_right = False
 
-    # apple 과일(인덱스 0 -> fruit_000.png)을 생성하고 즉시 이미지 로드
+    # 초기 월드 아이템 설정: apple과 blue_item을 생성해 world_items에 넣음
+    world_items = []
     try:
         apple = Fruit.from_index(0, load_image_now=True)
-        # 초기 위치는 witch의 오른쪽으로 설정
-        apple.x = witch.x + 50
-        apple.y = witch.y
+        spawn_world_item(apple, witch.x + 50, witch.y)
     except FileNotFoundError:
-        # 과일 이미지가 없으면 apple은 None으로 두고 계속 실행
-        apple = None
+        pass
 
-    # blue_item 생성: resources/item/blue_1.png (이름: blue_1)
     try:
-        blue_item = Item.from_filename('blue_1.png', load_image_now=True)
-        blue_item.x = witch.x - 50
-        blue_item.y = witch.y
+        blue = Item.from_filename('blue_1.png', load_image_now=True)
+        spawn_world_item(blue, witch.x - 50, witch.y)
     except FileNotFoundError:
-        blue_item = None
+        pass
 
 
 def handle_events():
@@ -152,7 +184,7 @@ def handle_events():
 
 
 def update():
-    global witch, apple, blue_item, move_up, move_down, move_left, move_right
+    global witch, world_items, move_up, move_down, move_left, move_right
     if witch:
         witch.update()
     # 이동 벡터 계산 (8방향)
@@ -167,14 +199,31 @@ def update():
         dy = ny * witch.speed
         witch.move(dx, dy)
 
-    # apple 위치를 매 프레임 witch.x + 50로 동기화
-    if apple is not None and witch is not None:
-        apple.x = 450
-        apple.y = 400
-    # blue_item을 witch.x - 50으로 동기화
-    if blue_item is not None and witch is not None:
-        blue_item.x = 350
-        blue_item.y = 400
+    # 월드 아이템 위치는 고정(줍기/버리기 시에만 변경됨)
+
+    # --- 충돌 기반 자동 획득 처리 ---
+    # witch 주변의 월드 아이템을 검사하여 거리 <= PICKUP_RADIUS이면 자동으로 인벤토리에 담습니다.
+    if witch is not None and world_items:
+        for it in list(world_items):
+            try:
+                dx = it.x - witch.x
+                dy = it.y - witch.y
+            except Exception:
+                # 좌표가 없으면 무시
+                continue
+            dist = math.hypot(dx, dy)
+            if dist <= PICKUP_RADIUS:
+                # 충돌로 자동 획득 시도
+                try:
+                    idx = witch.add_to_inventory(it)
+                except ValueError:
+                    # 인벤토리 가득 참: 획득 실패
+                    print('인벤토리 가득: 아이템을 획득할 수 없습니다')
+                    continue
+                # 성공적으로 인벤토리에 담았으면 월드에서 제거 및 콘솔에 출력
+                remove_world_item(it)
+                name = getattr(it, 'name', None) or getattr(it, 'filename', str(it))
+                print('{} 획득'.format(name))
 
 
 def render():
@@ -182,12 +231,12 @@ def render():
     draw_map()
     if witch:
         witch.draw()
-    # apple이 있다면 그리기 (witch 위치에 동기화됨)
-    if apple:
-        apple.draw()
-    # blue_item 그리기(왼쪽에 고정)
-    if blue_item:
-        blue_item.draw()
+    # 월드 아이템 그리기
+    for it in list(world_items):
+        try:
+            it.draw()
+        except Exception:
+            pass
     update_canvas()
 
 
