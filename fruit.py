@@ -27,7 +27,7 @@ class Fruit:
         # 결정된 filename (예: fruit_000.png)
         if isinstance(index_or_filename, int):
             self.index = index_or_filename
-            self.filename = f'fruit_{self.index:03d}.png'
+            self.filename = 'fruit_{:03d}.png'.format(self.index)
         elif isinstance(index_or_filename, str):
             # 사용자가 파일명(또는 전체 경로)을 준 경우
             self.filename = os.path.basename(index_or_filename)
@@ -71,7 +71,7 @@ class Fruit:
         if self.image is not None:
             return
         if not os.path.exists(self.path):
-            raise FileNotFoundError(f'과일 이미지 파일을 찾을 수 없습니다: {self.path}')
+            raise FileNotFoundError('과일 이미지 파일을 찾을 수 없습니다: {}'.format(self.path))
         # load_image는 open_canvas() 이후에만 안전하게 호출됩니다.
         self.image = load_image(self.path)
         # 이미지 크기 저장
@@ -102,7 +102,7 @@ class Fruit:
             self.image.draw(dx, dy)
 
     def __repr__(self):
-        return f"<Fruit name={self.name!r} filename={self.filename!r} path={self.path!r}>"
+        return "<Fruit name={!r} filename={!r} path={!r}>".format(self.name, self.filename, self.path)
 
     @classmethod
     def from_index(cls, index, name=None, load_image_now=True):

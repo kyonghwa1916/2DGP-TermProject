@@ -2,6 +2,7 @@ from pico2d import *
 import os
 from witch import Witch
 from fruit import Fruit
+from item import Item
 
 # 상수
 TILE_WIDTH = 16
@@ -12,6 +13,7 @@ TILE_SIZE = 100
 tileset = None
 witch = None
 apple = None
+blue_item = None
 maps = [(1, 1, 1, 1, 1, 1, 1, 1),
         (1, 1, 1, 1, 1, 1, 1, 1),
         (1, 1, 1, 1, 1, 1, 1, 1),
@@ -60,7 +62,7 @@ def draw_map():
 
 def init(width=800, height=600):
     """리소스 로드 및 캔버스 열기"""
-    global tileset, witch, apple
+    global tileset, witch, apple, blue_item
 
     current_path = os.path.dirname(__file__)
     resources_path = os.path.join(current_path, 'resources')
@@ -99,6 +101,14 @@ def init(width=800, height=600):
         # 과일 이미지가 없으면 apple은 None으로 두고 계속 실행
         apple = None
 
+    # blue_item 생성: resources/item/blue_1.png (이름: blue_1)
+    try:
+        blue_item = Item.from_filename('blue_1.png', load_image_now=True)
+        blue_item.x = witch.x - 50
+        blue_item.y = witch.y
+    except FileNotFoundError:
+        blue_item = None
+
 
 def handle_events():
     """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
@@ -112,13 +122,17 @@ def handle_events():
 
 
 def update():
-    global witch, apple
+    global witch, apple, blue_item
     if witch:
         witch.update()
     # apple 위치를 매 프레임 witch.x + 50로 동기화
     if apple is not None and witch is not None:
         apple.x = witch.x + 50
         apple.y = witch.y
+    # blue_item을 witch.x - 50으로 동기화
+    if blue_item is not None and witch is not None:
+        blue_item.x = witch.x - 50
+        blue_item.y = witch.y
 
 
 def render():
@@ -129,6 +143,9 @@ def render():
     # apple이 있다면 그리기 (witch 위치에 동기화됨)
     if apple:
         apple.draw()
+    # blue_item 그리기(왼쪽에 고정)
+    if blue_item:
+        blue_item.draw()
     update_canvas()
 
 
