@@ -20,6 +20,5 @@ def main():
         # 자원 해제
         source.cleanup()
 
-
 if __name__ == '__main__':
     main()

@@ -35,9 +35,23 @@ class Witch:
         # 방향 속성 추가 (기본값)
         self.dir = 1
         self.face_dir = 1
+        # 이동 속도 (픽셀/프레임)
+        self.speed = 5
 
     def update(self):
+        # 애니메이션 프레임 갱신
         self.frame = (self.frame + 1) % 8
+
+    def move(self, dx, dy):
+        """외부에서 호출하는 이동 메서드: dx,dy는 픽셀 단위 이동량입니다."""
+        # 위치 갱신
+        self.x += dx
+        self.y += dy
+        # 바라보는 방향 설정(수평 이동 기준)
+        if dx > 0:
+            self.face_dir = 1
+        elif dx < 0:
+            self.face_dir = -1
 
     def draw(self):
         # 기존 소스와 동일한 clip_draw 호출을 유지합니다.
