@@ -1,6 +1,7 @@
 from pico2d import *
 import os
 from witch import Witch
+from fruit import Fruit
 
 # 상수
 TILE_WIDTH = 16
@@ -10,6 +11,7 @@ TILE_SIZE = 100
 # 모듈 전역 리소스(초기화 시 설정됨)
 tileset = None
 witch = None
+apple = None
 maps = [(1, 1, 1, 1, 1, 1, 1, 1),
         (1, 1, 1, 1, 1, 1, 1, 1),
         (1, 1, 1, 1, 1, 1, 1, 1),
@@ -58,7 +60,7 @@ def draw_map():
 
 def init(width=800, height=600):
     """리소스 로드 및 캔버스 열기"""
-    global tileset, witch
+    global tileset, witch, apple
 
     current_path = os.path.dirname(__file__)
     resources_path = os.path.join(current_path, 'resources')
@@ -87,6 +89,16 @@ def init(width=800, height=600):
     tileset = TileSet(grass_file, TILE_WIDTH, TILE_HEIGHT)
     witch = Witch(witch_file)
 
+    # apple 과일(인덱스 0 -> fruit_000.png)을 생성하고 즉시 이미지 로드
+    try:
+        apple = Fruit.from_index(0, load_image_now=True)
+        # 초기 위치는 witch의 오른쪽으로 설정
+        apple.x = witch.x + 50
+        apple.y = witch.y
+    except FileNotFoundError:
+        # 과일 이미지가 없으면 apple은 None으로 두고 계속 실행
+        apple = None
+
 
 def handle_events():
     """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
@@ -100,9 +112,13 @@ def handle_events():
 
 
 def update():
-    global witch
+    global witch, apple
     if witch:
         witch.update()
+    # apple 위치를 매 프레임 witch.x + 50로 동기화
+    if apple is not None and witch is not None:
+        apple.x = witch.x + 50
+        apple.y = witch.y
 
 
 def render():
@@ -110,6 +126,9 @@ def render():
     draw_map()
     if witch:
         witch.draw()
+    # apple이 있다면 그리기 (witch 위치에 동기화됨)
+    if apple:
+        apple.draw()
     update_canvas()
 
 
