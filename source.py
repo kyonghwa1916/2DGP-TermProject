@@ -4,7 +4,7 @@ import math
 from witch import Witch
 from fruit import Fruit
 from item import Item
-from pot import Pot
+import map as tilemap
 import random
 
 # 상수
@@ -44,28 +44,29 @@ def remove_world_item(item):
 # --- 공개 API: init / handle_events / update / render / cleanup ---
 def init(width=800, height=600):
     global witch, world_items, move_up, move_down, move_left, move_right
-    global tileset, witch, world_items, move_up, move_down, move_left, move_right
+
+    # 캔버스 초기화 (pico2d 시작)
+    open_canvas(width, height)
+
+    # 타일맵 초기화
+    tilemap.load_tiles()
 
     current_path = os.path.dirname(__file__)
     resources_path = os.path.join(current_path, 'resources')
-    grass_file_candidates = ['grass.png', 'Grass.png']
     witch_file_candidates = ['B_witch_run.png']
 
     def find_file(folder, candidates):
-
         for name in candidates:
             p = os.path.join(folder, name)
             if os.path.exists(p):
-    else:
+                return p
         return None
-    grass_file = find_file(resources_path, grass_file_candidates)
+
     witch_file = find_file(resources_path, witch_file_candidates)
-    # witch 파일은 필수.
-    # grass는 없어도 진행할 수 있도록 처리(배경 생략). witch 파일은 필수.
+    # witch 파일은 필수
     if witch_file is None:
         raise FileNotFoundError('리소스 파일을 찾을 수 없습니다: {}'.format(witch_file_candidates))
 
-        tileset = None
     witch = Witch(witch_file)
 
     # 이동 플래그 초기화
@@ -194,7 +195,7 @@ def update():
                 # 좌표가 없으면 무시
                 continue
             dist = math.hypot(dx, dy)
-    clear_canvas()
+            if dist <= PICKUP_RADIUS:
                 # 충돌로 자동 획득 시도
                 try:
                     idx = witch.add_to_inventory(it)
@@ -209,9 +210,9 @@ def update():
 
 
 def render():
-    draw_map()
-    if witch:
-        witch.draw()
+    clear_canvas()
+    # 타일맵 먼저 그리기 (배경)
+    tilemap.draw_map()
     # 월드 아이템 그리기
     for it in list(world_items):
         try:
@@ -220,6 +221,9 @@ def render():
             it.draw(scale=scale)
         except Exception:
             pass
+    # witch를 맨 나중에 그리기 (최상단)
+    if witch:
+        witch.draw()
     update_canvas()
 
 
