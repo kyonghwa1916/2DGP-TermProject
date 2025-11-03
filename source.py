@@ -4,6 +4,7 @@ import math
 from witch import Witch
 from fruit import Fruit
 from item import Item
+import random
 
 # 상수
 TILE_WIDTH = 16
@@ -139,11 +140,48 @@ def init(width=800, height=600):
 
     # 초기 월드 아이템 설정: apple과 blue_item을 생성해 world_items에 넣음
     world_items = []
-    try:
-        apple = Fruit.from_index(0, load_image_now=True)
-        spawn_world_item(apple, witch.x + 50, witch.y)
-    except FileNotFoundError:
-        pass
+    # 캔버스 크기를 기준으로 랜덤한 위치에 과일들을 배치
+    def random_pos_avoiding(avoid_points=None, margin=50, min_dist=80, max_attempts=200):
+        """랜덤 위치를 반환하되 avoid_points 리스트(각 항목은 (x,y))로부터 min_dist 이상 떨어지게 합니다."""
+        if avoid_points is None:
+            avoid_points = []
+        attempts = 0
+        while attempts < max_attempts:
+            rx = random.randint(margin, max(margin, width - margin))
+            ry = random.randint(margin, max(margin, height - margin))
+            ok = True
+            for (ax, ay) in avoid_points:
+                if math.hypot(rx - ax, ry - ay) < min_dist:
+                    ok = False
+                    break
+            if ok:
+                return rx, ry
+            attempts += 1
+        # 실패 시 마지막으로 생성한 값을 반환
+        return rx, ry
+
+    # 생성할 과일 목록: (index, forced_name)
+    fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
+                        (3, 'grape'),     # fruit_003 -> grape
+                        (7, 'banana'),    # fruit_007 -> banana
+                        (12, 'peach') ]   # fruit_012 -> peach
+
+    # avoid list: 우선 witch 위치을 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
+    avoid = [(witch.x, witch.y)]
+    # 또한 이미 스폰된 과일끼리 겹치지 않도록 처리
+    for idx, forced_name in fruits_to_spawn:
+        try:
+            if forced_name:
+                f = Fruit.from_index(idx, name=forced_name, load_image_now=True)
+            else:
+                f = Fruit.from_index(idx, load_image_now=True)
+            rx, ry = random_pos_avoiding(avoid_points=avoid, min_dist=PICKUP_RADIUS + 20)
+            spawn_world_item(f, rx, ry)
+            # 새로 배치한 위치를 avoid 목록에 추가하여 다음 과일과 충돌 방지
+            avoid.append((rx, ry))
+        except FileNotFoundError:
+            # 파일이 없으면 그냥 넘김
+            pass
 
     try:
         blue = Item.from_filename('blue_1.png', load_image_now=True)
