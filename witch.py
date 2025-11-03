@@ -59,7 +59,10 @@ class Witch:
     def draw(self):
         # 기존 소스와 동일한 clip_draw 호출을 유지합니다.
         # (left, bottom, w, h, dx, dy, dw, dh)
-        self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
+        if self.face_dir == 1: # right
+            self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
+        else: #face_dir == -1: # left
+            self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
 
     # --- Inventory helper methods ---
     def add_to_inventory(self, item):
@@ -67,7 +70,7 @@ class Witch:
         for i in range(len(self.inventory)):
             if self.inventory[i] is None:
                 self.inventory[i] = item
-                return i
+                return i;
         raise ValueError('Inventory is full')
 
     def remove_from_inventory(self, index):
