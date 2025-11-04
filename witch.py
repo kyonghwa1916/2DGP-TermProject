@@ -62,7 +62,7 @@ class Witch:
         if self.face_dir == 1: # right
             self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
         else: #face_dir == -1: # left
-            self.image.clip_draw(0, self.frame * 48, 48, 48, self.x, self.y, 100, 100)
+            self.image.clip_composite_draw(0, self.frame * 48, 48, 48, 0, 'h', self.x, self.y, 100, 100)
 
     # --- Inventory helper methods ---
     def add_to_inventory(self, item):
