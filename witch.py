@@ -41,6 +41,10 @@ class Witch:
         # 인벤토리: 15칸 고정 (None은 빈 슬롯)
         self.inventory = [None] * 15
 
+        # 슬롯->오프셋 매핑: 슬롯 인덱스별로 (dx, dy) 오프셋을 지정할 수 있게 함
+        # 기본적으로 슬롯0은 witch의 옆(가로)으로, 슬롯 i는 i*20만큼 옆으로 배치
+        self.slot_offsets = {i: ( (i+1) * 20, 0 ) for i in range(len(self.inventory))}
+
     def update(self):
         # 애니메이션 프레임 갱신
         self.frame = (self.frame + 1) % 8
@@ -55,6 +59,75 @@ class Witch:
             self.face_dir = 1
         elif dx < 0:
             self.face_dir = -1
+        # face_dir과 dir을 동기화하여 슬롯 오프셋 계산이 항상 올바르게 되게 함
+        if dx != 0:
+            self.dir = self.face_dir
+
+    def _draw_item_at_slot(self, slot_index, base_x=None, base_y=None, scale=1.0):
+        """지정된 슬롯의 아이템을 base_x, base_y를 기반으로 그립니다.
+        - slot_index: 인벤토리 인덱스
+        - base_x, base_y: 좌표(기본은 witch.x, witch.y)
+        - scale: 출력 크기 비율(1.0이면 원본 크기)
+
+        이 함수는 아이템이 None이면 아무 것도 하지 않습니다.
+        아이템이 자체 draw()를 제공하면 호출하고, 그렇지 않으면 image 속성을 사용해 그립니다.
+        """
+        if slot_index < 0 or slot_index >= len(self.inventory):
+            return
+        it = self.inventory[slot_index]
+        if it is None:
+            return
+
+        bx = self.x if base_x is None else base_x
+        by = self.y if base_y is None else base_y
+
+        # 슬롯 오프셋을 읽어 방향(witch.dir)에 따라 반전
+        ox, oy = self.slot_offsets.get(slot_index, (20, 0))
+        # witch.dir(1 또는 -1)을 고려하여 좌우 배치 반전
+        draw_x = bx + self.dir * ox
+        draw_y = by + oy
+
+        # 우선 item.draw(surface_x, surface_y, scale)를 호출할 수 있는지 확인
+        # (프로젝트 관습상 draw 메서드는 보통 draw() 또는 draw(x,y) 형태임)
+        if hasattr(it, 'draw'):
+            try:
+                # 시그니처가 여러 가지일 수 있으니 안전하게 호출
+                it.draw(draw_x, draw_y)
+                return
+            except TypeError:
+                try:
+                    it.draw()
+                    return
+                except Exception:
+                    pass
+
+        # draw()가 없거나 실패하면 image 속성을 사용
+        img = getattr(it, 'image', None)
+        # 일부 객체는 filename/name 만 가지므로 파일에서 직접 로드 시도
+        if img is None:
+            fname = getattr(it, 'filename', None) or getattr(it, 'name', None)
+            if isinstance(fname, str):
+                try:
+                    img = load_image(fname)
+                except Exception:
+                    img = None
+
+        # 이미지가 있으면 중심 기준으로 그리되, scale에 따라 크기 변환
+        if img is not None:
+            try:
+                # 이미지 크기를 알 수 없으므로 기본 박스 크기 16x16 또는 48x48을 사용
+                w, h = getattr(it, 'w', None), getattr(it, 'h', None)
+                if w is None or h is None:
+                    # try to get image size (pico2d Image 객체는 .w .h 속성이 없음)
+                    # 안전하게 16x16 기본값 사용
+                    w, h = 16, 16
+                img.draw(draw_x, draw_y)
+            except Exception:
+                # 마지막 수단: clip_draw 전체 이미지
+                try:
+                    img.draw(draw_x, draw_y)
+                except Exception:
+                    pass
 
     def draw(self):
         # 기존 소스와 동일한 clip_draw 호출을 유지합니다.
@@ -64,13 +137,17 @@ class Witch:
         else: #face_dir == -1: # left
             self.image.clip_composite_draw(0, self.frame * 48, 48, 48, 0, 'h', self.x, self.y, 100, 100)
 
+        # 인벤토리의 첫 번째 아이템(인덱스 0)을 witch의 옆에 그립니다.
+        # 향후 다른 슬롯을 그리려면 slot_index 파라미터를 바꿔 호출하면 됩니다.
+        self._draw_item_at_slot(0)
+
     # --- Inventory helper methods ---
     def add_to_inventory(self, item):
         """첫 번째 빈 슬롯에 item을 넣습니다. 성공하면 인덱스를 반환하고, 가득 차 있으면 ValueError를 발생시킵니다."""
         for i in range(len(self.inventory)):
             if self.inventory[i] is None:
                 self.inventory[i] = item
-                return i;
+                return i
         raise ValueError('Inventory is full')
 
     def remove_from_inventory(self, index):
