@@ -1,3 +1,4 @@
+import random
 from pico2d import *
 import os
 
@@ -61,8 +62,8 @@ class Fruit:
             self._ensure_image_loaded()
 
         # 위치/크기 기본값
-        self.x = 0
-        self.y = 0
+        self.x = random.randint(50, 750)
+        self.y = random.randint(50, 550)
         self.w = None
         self.h = None
 
@@ -99,7 +100,7 @@ class Fruit:
             self.image.draw(dx, dy, dw, dh)
         else:
             # fallback: 원본 크기로 draw
-            self.image.draw(dx, dy)
+            self.image.draw(dx, dy, 30, 30)
 
     def __repr__(self):
         return "<Fruit name={!r} filename={!r} path={!r}>".format(self.name, self.filename, self.path)

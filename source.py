@@ -33,6 +33,7 @@ def spawn_world_item(item, x, y):
     except FileNotFoundError:
         pass
     item.x = x
+    item.y = y
     world_items.append(item)
 
 
