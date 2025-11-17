@@ -4,22 +4,36 @@ import math
 from witch import Witch
 from fruit import Fruit
 from item import Item
+from npc import NPC
 import map as tilemap
+import pot
 import random
 
 # 상수
 PICKUP_RADIUS = 48  # 픽셀 단위 충돌/획득 반경
+NPC_INTERACTION_RADIUS = 80  # NPC와의 상호작용 반경
 
 # 모듈 전역 리소스(초기화 시 설정됨)
 # witch 인스턴스(초기화 시 설정됨)
 witch = None
 # world_items: 화면에 놓인 Item/Fruit 인스턴스 목록
 world_items = []
+# npcs: 화면에 배치된 NPC 인스턴스 목록
+npcs = []
 # 이동 플래그
 move_up = False
 move_down = False
 move_left = False
 move_right = False
+
+# Arrow 설정
+arrow_image = None
+arrow_x = 700
+arrow_y = 450
+arrow_active = True  # arrow가 밟히면 False
+
+# 맵 상태 ('map' 또는 'pot')
+current_map = 'map'
 
 
 # --- world item helpers ---
@@ -44,13 +58,23 @@ def remove_world_item(item):
     # 실제 리소스 폴더의 파일명 대소문자에 맞게 지정
 # --- 공개 API: init / handle_events / update / render / cleanup ---
 def init(width=800, height=600):
-    global witch, world_items, move_up, move_down, move_left, move_right
+    global witch, world_items, npcs, move_up, move_down, move_left, move_right
+    global arrow_image, arrow_active, current_map
 
     # 캔버스 초기화 (pico2d 시작)
     open_canvas(width, height)
 
     # 타일맵 초기화
     tilemap.load_tiles()
+
+    # pot 맵 초기화
+    pot.load_tiles()
+    pot.load_pots()
+
+    # arrow 이미지 로드
+    arrow_image = load_image('resources/arrow.png')
+    arrow_active = True
+    current_map = 'map'
 
     current_path = os.path.dirname(__file__)
     resources_path = os.path.join(current_path, 'resources')
@@ -128,6 +152,16 @@ def init(width=800, height=600):
     except FileNotFoundError:
         pass
 
+    # NPC 초기화
+    npcs = []
+    try:
+        girl1 = NPC.from_filename('girl1_idle.png', load_image_now=True)
+        girl1.x = 700
+        girl1.y = 300
+        npcs.append(girl1)
+    except FileNotFoundError:
+        pass
+
 def handle_events():
     """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
     global move_up, move_down, move_left, move_right
@@ -147,6 +181,39 @@ def handle_events():
                 move_left = True
             elif e.key == SDLK_RIGHT or e.key == SDLK_d:
                 move_right = True
+            # 숫자키(0~9) 입력: 선택 슬롯 변경
+            elif e.key in (SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9):
+                key_to_index = {
+                    SDLK_0:0, SDLK_1:1, SDLK_2:2, SDLK_3:3, SDLK_4:4,
+                    SDLK_5:5, SDLK_6:6, SDLK_7:7, SDLK_8:8, SDLK_9:9
+                }
+                idx = key_to_index.get(e.key, None)
+                if idx is not None and witch is not None:
+                    # clamp to inventory range inside select_slot
+                    witch.select_slot(idx)
+            # e키 입력: NPC와 상호작용
+            elif e.key == SDLK_e:
+                if witch is not None and npcs:
+                    # 가까운 NPC 찾기
+                    for npc in npcs:
+                        try:
+                            dx = npc.x - witch.x
+                            dy = npc.y - witch.y
+                            dist = math.hypot(dx, dy)
+                            # NPC 근처에서 e키를 누르면 아이템 전달
+                            if dist <= NPC_INTERACTION_RADIUS:
+                                # 현재 선택된 슬롯의 아이템 가져오기
+                                selected_idx = witch.get_selected_slot()
+                                item = witch.get_item(selected_idx)
+                                if item is not None:
+                                    # NPC에게 아이템 전달
+                                    npc.receive_item(item)
+                                    # witch 인벤토리에서 아이템 제거
+                                    witch.remove_from_inventory(selected_idx)
+                                else:
+                                    print('들고 있는 아이템이 없습니다')
+                        except Exception as ex:
+                            print('상호작용 중 오류:', ex)
         elif e.type == SDL_KEYUP:
             if e.key == SDLK_UP or e.key == SDLK_w:
                 move_up = False
@@ -161,6 +228,8 @@ def handle_events():
 
 def update():
     global witch, world_items, move_up, move_down, move_left, move_right
+    global arrow_active, current_map
+
     if witch:
         witch.update()
     # 이동 벡터 계산 (8방향)
@@ -175,6 +244,21 @@ def update():
         dy = ny * witch.speed
         witch.move(dx, dy)
 
+    # arrow와 witch 충돌 감지 (map 상태일 때만)
+    if current_map == 'map' and arrow_active and witch is not None:
+        dx = arrow_x - witch.x
+        dy = arrow_y - witch.y
+        dist = math.hypot(dx, dy)
+        if dist <= PICKUP_RADIUS:
+            # 맵을 pot으로 전환
+            current_map = 'pot'
+            arrow_active = False
+            print('맵이 pot으로 전환되었습니다!')
+
+    # pot 맵 애니메이션 업데이트
+    if current_map == 'pot':
+        pot.update_pots()
+
     # 월드 아이템 위치는 고정(줍기/버리기 시에만 변경됨)
 
     # 월드 아이템의 애니메이션(있는 경우)을 갱신
@@ -182,6 +266,14 @@ def update():
         try:
             if hasattr(it, 'update'):
                 it.update()
+        except Exception:
+            pass
+
+    # NPC 업데이트
+    for npc in npcs:
+        try:
+            if hasattr(npc, 'update'):
+                npc.update()
         except Exception:
             pass
 
@@ -209,20 +301,67 @@ def update():
                 name = getattr(it, 'name', None) or getattr(it, 'filename', str(it))
                 print('{} 획득'.format(name))
 
+    # --- NPC 상호작용 처리 ---
+    # witch와 NPC의 거리를 체크하여 가까우면 메시지 표시
+    if witch is not None and npcs:
+        for npc in npcs:
+            try:
+                dx = npc.x - witch.x
+                dy = npc.y - witch.y
+                dist = math.hypot(dx, dy)
+                is_near = dist <= NPC_INTERACTION_RADIUS
+
+                # 거리가 가까우면 메시지 표시
+                if is_near:
+                    npc.show_message = True
+                    # 멀었다가 다시 가까워지면 메시지 타입 초기화
+                    if not npc.was_near:
+                        npc.message_type = "default"
+                else:
+                    npc.show_message = False
+
+                # 현재 상태를 저장
+                npc.was_near = is_near
+            except Exception:
+                pass
+
 
 def render():
+    global current_map, arrow_active, arrow_image
     clear_canvas()
-    # 타일맵 먼저 그리기 (배경)
-    tilemap.draw_map()
-    # 월드 아이템 그리기
-    for it in list(world_items):
-        try:
-            # 각 아이템이 개별적으로 원하는 스케일을 가질 수 있게 지원
-            scale = getattr(it, 'draw_scale', 1.0)
-            it.draw(scale=scale)
-        except Exception:
-            pass
-    # witch를 맨 나중에 그리기 (최상단)
+
+    # 현재 맵 상태에 따라 다른 맵 그리기
+    if current_map == 'map':
+        # 타일맵 먼저 그리기 (배경)
+        tilemap.draw_map()
+
+        # arrow 그리기 (아직 밟지 않았다면)
+        if arrow_active and arrow_image:
+            arrow_image.draw(arrow_x, arrow_y)
+
+        # map 상태일 때만 월드 아이템과 NPC 그리기
+        # 월드 아이템 그리기
+        for it in list(world_items):
+            try:
+                # 각 아이템이 개별적으로 원하는 스케일을 가질 수 있게 지원
+                scale = getattr(it, 'draw_scale', 1.0)
+                it.draw(scale=scale)
+            except Exception:
+                pass
+        # NPC 그리기
+        for npc in npcs:
+            try:
+                npc.draw()
+            except Exception:
+                pass
+
+    elif current_map == 'pot':
+        # pot 맵 그리기
+        pot.draw_map()
+        pot.draw_pots()
+        # pot 맵에서는 world_items와 npcs를 그리지 않음
+
+    # witch를 맨 나중에 그리기 (최상단) - 모든 맵에서 표시
     if witch:
         witch.draw()
     update_canvas()

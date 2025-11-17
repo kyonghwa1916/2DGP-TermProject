@@ -39,11 +39,15 @@ class Witch:
         self.speed = 5
 
         # 인벤토리: 15칸 고정 (None은 빈 슬롯)
-        self.inventory = [None] * 15
+        self.inventory = [None] * 10
 
-        # 슬롯->오프셋 매핑: 슬롯 인덱스별로 (dx, dy) 오프셋을 지정할 수 있게 함
-        # 기본적으로 슬롯0은 witch의 옆(가로)으로, 슬롯 i는 i*20만큼 옆으로 배치
-        self.slot_offsets = {i: ( (i+1) * 20, 0 ) for i in range(len(self.inventory))}
+        # 화면에 표시할 선택 슬롯 (0~9 입력으로 변경 가능)
+        # 기본값은 0번 슬롯
+        self.selected_slot = 0
+
+         # 슬롯->오프셋 매핑: 모든 슬롯이 witch로부터 같은 위치에 표시되도록 고정
+         # witch 옆 20픽셀 떨어진 곳에 고정
+        self.slot_offsets = {i: (20, 0) for i in range(len(self.inventory))}
 
     def update(self):
         # 애니메이션 프레임 갱신
@@ -137,9 +141,28 @@ class Witch:
         else: #face_dir == -1: # left
             self.image.clip_composite_draw(0, self.frame * 48, 48, 48, 0, 'h', self.x, self.y, 100, 100)
 
-        # 인벤토리의 첫 번째 아이템(인덱스 0)을 witch의 옆에 그립니다.
-        # 향후 다른 슬롯을 그리려면 slot_index 파라미터를 바꿔 호출하면 됩니다.
-        self._draw_item_at_slot(0)
+        # 현재 선택된 슬롯의 아이템을 witch의 옆에 그립니다.
+        # 선택 슬롯은 게임 루프에서 witch.select_slot(n)으로 변경할 수 있습니다.
+        slot_to_draw = getattr(self, 'selected_slot', 0)
+        self._draw_item_at_slot(slot_to_draw)
+
+    def select_slot(self, index):
+        """선택할 슬롯을 설정합니다. index는 정수로 0~9 범위를 권장합니다.
+        인벤토리 길이를 초과하지 않도록 클램프합니다.
+        """
+        try:
+            idx = int(index)
+        except Exception:
+            return
+        # 권장 입력 범위 0~9, 내부적으로는 0~len(inventory)-1로 제한
+        if idx < 0:
+            idx = 0
+        if idx >= len(self.inventory):
+            idx = len(self.inventory) - 1
+        self.selected_slot = idx
+
+    def get_selected_slot(self):
+        return getattr(self, 'selected_slot', 0)
 
     # --- Inventory helper methods ---
     def add_to_inventory(self, item):

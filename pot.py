@@ -86,7 +86,7 @@ def update_pots():
     """POT 애니메이션을 업데이트합니다."""
     global frame_index, frame_time
 
-    frame_time += 0.01  # delay(0.01) 기준
+    frame_time += 0.05  # delay(0.05) 기준 (main.py에서 사용)
 
     if frame_time >= FRAME_DELAY:
         frame_index = (frame_index + 1) % FRAME_COUNT
