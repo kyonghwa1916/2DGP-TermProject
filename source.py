@@ -55,6 +55,65 @@ def remove_world_item(item):
     if item in world_items:
         world_items.remove(item)
 
+
+def respawn_world_items(width=800, height=600):
+    """world_items를 랜덤 위치에 재생성합니다. witch와 npcs는 유지됩니다."""
+    global world_items
+
+    # 기존 아이템 제거
+    world_items = []
+
+    def random_pos_avoiding(avoid_points=None, margin=50, min_dist=80, max_attempts=200):
+        """랜덤 위치를 반환하되 avoid_points 리스트(각 항목은 (x,y))로부터 min_dist 이상 떨어지게 합니다."""
+        if avoid_points is None:
+            avoid_points = []
+        # 기본값 초기화
+        rx = margin
+        ry = margin
+        attempts = 0
+        while attempts < max_attempts:
+            rx = random.randint(margin, max(margin, width - margin))
+            ry = random.randint(margin, max(margin, height - margin))
+            ok = True
+            for (ax, ay) in avoid_points:
+                if math.hypot(rx - ax, ry - ay) < min_dist:
+                    ok = False
+                    break
+            if ok:
+                return rx, ry
+            attempts += 1
+        # 실패 시 마지막으로 생성한 값을 반환
+        return rx, ry
+
+    # 생성할 과일 목록: (index, forced_name)
+    fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
+                        (3, 'grape'),     # fruit_003 -> grape
+                        (7, 'banana'),    # fruit_007 -> banana
+                        (12, 'peach') ]   # fruit_012 -> peach
+
+    # avoid list: 우선 witch 위치를 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
+    avoid = [(witch.x, witch.y)]
+    # 또한 이미 스폰된 과일끼리 겹치지 않도록 처리
+    for idx, forced_name in fruits_to_spawn:
+        try:
+            if forced_name:
+                f = Fruit.from_index(idx, name=forced_name, load_image_now=True)
+            else:
+                f = Fruit.from_index(idx, load_image_now=True)
+            rx, ry = random_pos_avoiding(avoid_points=avoid, min_dist=PICKUP_RADIUS + 20)
+            spawn_world_item(f, rx, ry)
+            # 새로 배치한 위치를 avoid 목록에 추가하여 다음 과일과 충돌 방지
+            avoid.append((rx, ry))
+        except FileNotFoundError:
+            # 파일이 없으면 그냥 넘김
+            pass
+
+    try:
+        blue = Item.from_filename('blue_1.png', load_image_now=True)
+        spawn_world_item(blue, witch.x - 50, witch.y)
+    except FileNotFoundError:
+        pass
+
     # 실제 리소스 폴더의 파일명 대소문자에 맞게 지정
 # --- 공개 API: init / handle_events / update / render / cleanup ---
 def init(width=800, height=600):
@@ -242,7 +301,20 @@ def update():
         ny = vy / length
         dx = nx * witch.speed
         dy = ny * witch.speed
+
+        # 이동 전 위치 저장
+        prev_x = witch.x
+        prev_y = witch.y
+
+        # 이동 시도
         witch.move(dx, dy)
+
+        # pot 맵일 때 충돌 검사 (witch 크기: 100x100)
+        if current_map == 'pot':
+            if pot.check_pot_collision(witch.x, witch.y, 100, 100):
+                # 충돌 발생 시 이전 위치로 되돌림
+                witch.x = prev_x
+                witch.y = prev_y
 
     # arrow와 witch 충돌 감지 (map 상태일 때만)
     if current_map == 'map' and arrow_active and witch is not None:
@@ -253,7 +325,22 @@ def update():
             # 맵을 pot으로 전환
             current_map = 'pot'
             arrow_active = False
+            pot.arrow_active = True  # pot 맵의 arrow 활성화
             print('맵이 pot으로 전환되었습니다!')
+
+    # pot 맵의 arrow와 witch 충돌 감지 (pot 상태일 때만)
+    if current_map == 'pot' and pot.arrow_active and witch is not None:
+        dx = pot.ARROW_X - witch.x
+        dy = pot.ARROW_Y - witch.y
+        dist = math.hypot(dx, dy)
+        if dist <= PICKUP_RADIUS:
+            # 맵을 map으로 전환
+            current_map = 'map'
+            pot.arrow_active = False
+            arrow_active = True  # map의 arrow 활성화
+            # world_items 랜덤 재생성 (witch와 npcs는 유지)
+            respawn_world_items()
+            print('맵이 map으로 전환되었습니다! 아이템이 재생성되었습니다.')
 
     # pot 맵 애니메이션 업데이트
     if current_map == 'pot':
@@ -359,6 +446,9 @@ def render():
         # pot 맵 그리기
         pot.draw_map()
         pot.draw_pots()
+        # pot의 arrow가 활성화되어 있으면 그리기
+        if pot.arrow_active:
+            pot.draw_arrow()  # y축 회전된 arrow 그리기
         # pot 맵에서는 world_items와 npcs를 그리지 않음
 
     # witch를 맨 나중에 그리기 (최상단) - 모든 맵에서 표시

@@ -53,6 +53,7 @@ FRAME_DELAY = 0.1  # 프레임당 0.1초
 arrow_image = None
 ARROW_X = 100
 ARROW_Y = 450
+arrow_active = True  # arrow가 밟히면 False로 변경
 
 
 def load_tiles():
@@ -64,9 +65,10 @@ def load_tiles():
 
 def load_pots():
     """POT 이미지를 로드합니다."""
-    global green_pot_image, arrow_image
+    global green_pot_image, arrow_image, arrow_active
     green_pot_image = load_image('resources/pot/green_pot.png')
     arrow_image = load_image('resources/arrow.png')
+    arrow_active = True  # arrow 활성화
 
 
 def draw_map():
