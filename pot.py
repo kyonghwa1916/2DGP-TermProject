@@ -35,6 +35,14 @@ POT_DRAW_SIZE = 200
 POT_X = 400
 POT_Y = 300
 
+# Pot 바운딩 박스 설정 (210*210)
+POT_BBOX_Width = 170
+POT_BBOX_HEIGHT = 210
+POT_BBOX_LEFT = POT_X - POT_BBOX_Width // 2
+POT_BBOX_RIGHT = POT_X + POT_BBOX_Width // 2
+POT_BBOX_BOTTOM = POT_Y - POT_BBOX_HEIGHT // 2
+POT_BBOX_TOP = POT_Y + POT_BBOX_HEIGHT // 2
+
 # 애니메이션 변수
 green_pot_image = None
 frame_index = 0
@@ -86,11 +94,30 @@ def update_pots():
     """POT 애니메이션을 업데이트합니다."""
     global frame_index, frame_time
 
-    frame_time += 0.05  # delay(0.05) 기준 (main.py에서 사용)
+    frame_time += 0.09  # delay(0.05) 기준 (main.py에서 사용)
 
     if frame_time >= FRAME_DELAY:
         frame_index = (frame_index + 1) % FRAME_COUNT
         frame_time = 0
+
+
+def check_pot_collision(x, y, width, height):
+    """
+    주어진 AABB(x, y, width, height)가 pot의 바운딩 박스와 충돌하는지 검사합니다.
+    x, y는 중심 좌표입니다.
+    충돌하면 True, 아니면 False를 반환합니다.
+    """
+    # 전달받은 객체의 바운딩 박스 계산
+    obj_left = x - width // 2
+    obj_right = x + width // 2
+    obj_bottom = y - height // 2
+    obj_top = y + height // 2
+
+    # AABB 충돌 검사
+    if (obj_right > POT_BBOX_LEFT and obj_left < POT_BBOX_RIGHT and
+        obj_top > POT_BBOX_BOTTOM and obj_bottom < POT_BBOX_TOP):
+        return True
+    return False
 
 
 # 테스트용 코드
