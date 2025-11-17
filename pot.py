@@ -49,6 +49,11 @@ frame_index = 0
 frame_time = 0
 FRAME_DELAY = 0.1  # 프레임당 0.1초
 
+# Arrow 이미지 설정
+arrow_image = None
+ARROW_X = 100
+ARROW_Y = 450
+
 
 def load_tiles():
     """타일 이미지를 로드합니다."""
@@ -59,8 +64,9 @@ def load_tiles():
 
 def load_pots():
     """POT 이미지를 로드합니다."""
-    global green_pot_image
+    global green_pot_image, arrow_image
     green_pot_image = load_image('resources/pot/green_pot.png')
+    arrow_image = load_image('resources/arrow.png')
 
 
 def draw_map():
@@ -88,6 +94,13 @@ def draw_pots():
             POT_X, POT_Y,                   # 그릴 위치
             POT_DRAW_SIZE, POT_DRAW_SIZE    # 그릴 크기 (200x200)
         )
+
+
+def draw_arrow():
+    """Arrow 이미지를 y축 회전(좌우 반전)하여 그립니다."""
+    if arrow_image:
+        # clip_composite_draw를 사용하여 y축 회전 ('h'는 horizontal flip)
+        arrow_image.composite_draw(0, 'h', ARROW_X, ARROW_Y)
 
 
 def update_pots():
@@ -131,6 +144,7 @@ if __name__ == '__main__':
         clear_canvas()
         draw_map()      # 배경 타일 그리기
         draw_pots()     # Green Pot 애니메이션 그리기
+        draw_arrow()    # Arrow 이미지 그리기 (y축 회전)
         update_canvas()
 
         update_pots()   # 애니메이션 업데이트
