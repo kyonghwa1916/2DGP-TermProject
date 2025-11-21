@@ -12,7 +12,7 @@ def draw_startpage():
     """시작 페이지를 화면에 그립니다."""
     if startpage_image:
         # 이미지를 화면 중앙에 맞춰서 그리기
-        startpage_image.draw(400, 300)
+        startpage_image.draw(400, 300, 800, 600)
 
 def cleanup_startpage():
     """시작 페이지 리소스를 정리합니다."""
