@@ -7,6 +7,7 @@ from item import Item
 from npc import NPC
 import map as tilemap
 import pot
+import startpage
 import random
 
 # 상수
@@ -34,6 +35,9 @@ arrow_active = True  # arrow가 밟히면 False
 
 # 맵 상태 ('map' 또는 'pot')
 current_map = 'map'
+
+# 게임 상태 ('startpage' 또는 'game')
+game_state = 'startpage'
 
 
 # --- world item helpers ---
@@ -118,10 +122,14 @@ def respawn_world_items(width=800, height=600):
 # --- 공개 API: init / handle_events / update / render / cleanup ---
 def init(width=800, height=600):
     global witch, world_items, npcs, move_up, move_down, move_left, move_right
-    global arrow_image, arrow_active, current_map
+    global arrow_image, arrow_active, current_map, game_state
 
     # 캔버스 초기화 (pico2d 시작)
     open_canvas(width, height)
+
+    # 시작 페이지 로드
+    startpage.load_startpage()
+    game_state = 'startpage'
 
     # 타일맵 초기화
     tilemap.load_tiles()
@@ -223,7 +231,7 @@ def init(width=800, height=600):
 
 def handle_events():
     """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
-    global move_up, move_down, move_left, move_right
+    global move_up, move_down, move_left, move_right, game_state
 
     events = get_events()
     for e in events:
@@ -232,6 +240,10 @@ def handle_events():
         elif e.type == SDL_KEYDOWN:
             if e.key == SDLK_ESCAPE:
                 return False
+            # 시작 페이지에서 E키를 누르면 게임 시작
+            elif e.key == SDLK_e and game_state == 'startpage':
+                game_state = 'game'
+                print('게임 시작!')
             elif e.key == SDLK_UP or e.key == SDLK_w:
                 move_up = True
             elif e.key == SDLK_DOWN or e.key == SDLK_s:
@@ -287,7 +299,11 @@ def handle_events():
 
 def update():
     global witch, world_items, move_up, move_down, move_left, move_right
-    global arrow_active, current_map
+    global arrow_active, current_map, game_state
+
+    # 시작 페이지 상태에서는 업데이트하지 않음
+    if game_state == 'startpage':
+        return
 
     if witch:
         witch.update()
@@ -414,8 +430,14 @@ def update():
 
 
 def render():
-    global current_map, arrow_active, arrow_image
+    global current_map, arrow_active, arrow_image, game_state
     clear_canvas()
+
+    # 시작 페이지 상태일 때는 시작 페이지만 표시
+    if game_state == 'startpage':
+        startpage.draw_startpage()
+        update_canvas()
+        return
 
     # 현재 맵 상태에 따라 다른 맵 그리기
     if current_map == 'map':
