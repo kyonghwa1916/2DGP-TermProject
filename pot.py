@@ -41,7 +41,7 @@ POT_BBOX_HEIGHT = 210
 POT_BBOX_LEFT = POT_X - POT_BBOX_Width // 2
 POT_BBOX_RIGHT = POT_X + POT_BBOX_Width // 2
 POT_BBOX_BOTTOM = POT_Y - POT_BBOX_HEIGHT // 2
-POT_BBOX_TOP = POT_Y + POT_BBOX_HEIGHT // 2
+POT_BBOX_TOP = POT_Y + 20
 
 # 애니메이션 변수
 green_pot_image = None
@@ -54,6 +54,12 @@ arrow_image = None
 ARROW_X = 100
 ARROW_Y = 450
 arrow_active = True  # arrow가 밟히면 False로 변경
+
+# Pot 리소스 목록 (투입된 아이템들)
+pot_resources = []
+
+# Pot 상호작용 거리
+POT_INTERACTION_RADIUS = 120
 
 
 def load_tiles():
@@ -133,6 +139,41 @@ def check_pot_collision(x, y, width, height):
         obj_top > POT_BBOX_BOTTOM and obj_bottom < POT_BBOX_TOP):
         return True
     return False
+
+
+def check_near_pot(witch_x, witch_y):
+    """
+    witch가 pot 근처에 있는지 확인합니다.
+    근처에 있으면 True, 아니면 False를 반환합니다.
+    """
+    import math
+    dist = math.hypot(witch_x - POT_X, witch_y - POT_Y)
+    return dist <= POT_INTERACTION_RADIUS
+
+
+def add_resource_to_pot(item):
+    """
+    pot의 리소스 목록에 아이템을 추가합니다.
+    """
+    global pot_resources
+    pot_resources.append(item)
+    item_name = getattr(item, 'name', None) or getattr(item, 'filename', str(item))
+    print(f'Pot에 {item_name} 추가됨! (현재 리소스: {len(pot_resources)}개)')
+
+
+def get_pot_resources():
+    """
+    현재 pot에 있는 리소스 목록을 반환합니다.
+    """
+    return pot_resources
+
+
+def clear_pot_resources():
+    """
+    pot의 리소스 목록을 비웁니다.
+    """
+    global pot_resources
+    pot_resources = []
 
 
 # 테스트용 코드

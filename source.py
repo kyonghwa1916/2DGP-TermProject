@@ -262,9 +262,26 @@ def handle_events():
                 if idx is not None and witch is not None:
                     # clamp to inventory range inside select_slot
                     witch.select_slot(idx)
-            # e키 입력: NPC와 상호작용
+            # e키 입력: NPC 상호작용 또는 pot에 아이템 투입
             elif e.key == SDLK_e:
-                if witch is not None and npcs:
+                if game_state != 'game':
+                    # 게임 상태가 아니면 무시
+                    pass
+                elif current_map == 'pot' and witch is not None:
+                    # pot 맵에서 E키: pot 근처에서 아이템 투입
+                    if pot.check_near_pot(witch.x, witch.y):
+                        # 현재 선택된 슬롯의 아이템 가져오기
+                        selected_idx = witch.get_selected_slot()
+                        item = witch.get_item(selected_idx)
+                        if item is not None:
+                            # pot에 아이템 추가
+                            pot.add_resource_to_pot(item)
+                            # witch 인벤토리에서 아이템 제거
+                            witch.remove_from_inventory(selected_idx)
+                        else:
+                            print('들고 있는 아이템이 없습니다')
+                elif current_map == 'map' and witch is not None and npcs:
+                    # map 맵에서 E키: NPC와 상호작용
                     # 가까운 NPC 찾기
                     for npc in npcs:
                         try:
