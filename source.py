@@ -274,10 +274,10 @@ def handle_events():
                         selected_idx = witch.get_selected_slot()
                         item = witch.get_item(selected_idx)
                         if item is not None:
-                            # pot에 아이템 추가
-                            pot.add_resource_to_pot(item)
-                            # witch 인벤토리에서 아이템 제거
-                            witch.remove_from_inventory(selected_idx)
+                            # pot에 아이템 추가 (성공하면 True, 실패하면 False)
+                            if pot.add_resource_to_pot(item):
+                                # 성공했으면 witch 인벤토리에서 아이템 제거
+                                witch.remove_from_inventory(selected_idx)
                         else:
                             print('들고 있는 아이템이 없습니다')
                 elif current_map == 'map' and witch is not None and npcs:
@@ -485,6 +485,8 @@ def render():
         # pot 맵 그리기
         pot.draw_map()
         pot.draw_pots()
+        # pot에 투입된 아이템들 그리기
+        pot.draw_pot_resources()
         # pot의 arrow가 활성화되어 있으면 그리기
         if pot.arrow_active:
             pot.draw_arrow()  # y축 회전된 arrow 그리기

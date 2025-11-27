@@ -61,6 +61,15 @@ pot_resources = []
 # Pot 상호작용 거리
 POT_INTERACTION_RADIUS = 120
 
+# Pot 최대 리소스 개수
+MAX_POT_RESOURCES = 3
+
+# 아이템 표시 위치 (pot 아래쪽)
+ITEM_DISPLAY_Y = 150
+ITEM_DISPLAY_START_X = POT_X - 80
+ITEM_DISPLAY_SPACING = 80
+ITEM_DISPLAY_SIZE = 50
+
 
 def load_tiles():
     """타일 이미지를 로드합니다."""
@@ -102,6 +111,24 @@ def draw_pots():
             POT_X, POT_Y,                   # 그릴 위치
             POT_DRAW_SIZE, POT_DRAW_SIZE    # 그릴 크기 (200x200)
         )
+
+
+def draw_pot_resources():
+    """pot에 투입된 아이템들을 pot 아래쪽에 표시합니다."""
+    for i, item in enumerate(pot_resources):
+        if i >= MAX_POT_RESOURCES:
+            break
+
+        # 아이템 표시 위치 계산
+        x = ITEM_DISPLAY_START_X + (i * ITEM_DISPLAY_SPACING)
+        y = ITEM_DISPLAY_Y
+
+        # 아이템 이미지 그리기
+        try:
+            if hasattr(item, 'image') and item.image:
+                item.image.draw(x, y, ITEM_DISPLAY_SIZE, ITEM_DISPLAY_SIZE)
+        except Exception:
+            pass
 
 
 def draw_arrow():
@@ -154,11 +181,18 @@ def check_near_pot(witch_x, witch_y):
 def add_resource_to_pot(item):
     """
     pot의 리소스 목록에 아이템을 추가합니다.
+    최대 3개까지만 추가할 수 있습니다.
+    성공하면 True, 실패하면 False를 반환합니다.
     """
     global pot_resources
+    if len(pot_resources) >= MAX_POT_RESOURCES:
+        print(f'Pot가 가득 찼습니다! (최대 {MAX_POT_RESOURCES}개)')
+        return False
+
     pot_resources.append(item)
     item_name = getattr(item, 'name', None) or getattr(item, 'filename', str(item))
-    print(f'Pot에 {item_name} 추가됨! (현재 리소스: {len(pot_resources)}개)')
+    print(f'Pot에 {item_name} 추가됨! (현재 리소스: {len(pot_resources)}/{MAX_POT_RESOURCES}개)')
+    return True
 
 
 def get_pot_resources():
