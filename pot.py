@@ -70,6 +70,10 @@ ITEM_DISPLAY_START_X = POT_X - 80
 ITEM_DISPLAY_SPACING = 80
 ITEM_DISPLAY_SIZE = 50
 
+# 아이템 제작 관련
+crafting_timer = None
+crafting_delay = 2.0  # 2초
+
 
 def load_tiles():
     """타일 이미지를 로드합니다."""
@@ -140,13 +144,23 @@ def draw_arrow():
 
 def update_pots():
     """POT 애니메이션을 업데이트합니다."""
-    global frame_index, frame_time
+    global frame_index, frame_time, crafting_timer, pot_resources
 
     frame_time += 0.09  # delay(0.05) 기준 (main.py에서 사용)
 
     if frame_time >= FRAME_DELAY:
         frame_index = (frame_index + 1) % FRAME_COUNT
         frame_time = 0
+
+    # 제작 타이머 업데이트
+    if crafting_timer is not None:
+        crafting_timer += 0.05  # main.py의 delay(0.05)와 동일
+
+        # 2초가 지나면 아이템 삭제
+        if crafting_timer >= crafting_delay:
+            print('제작 완료! 아이템이 사라집니다.')
+            pot_resources = []
+            crafting_timer = None
 
 
 def check_pot_collision(x, y, width, height):
@@ -157,8 +171,8 @@ def check_pot_collision(x, y, width, height):
     """
     # 전달받은 객체의 바운딩 박스 계산
     obj_left = x - width // 2
-    obj_right = x + width // 2
-    obj_bottom = y - height // 2
+    obj_right = x + width // 2 - 20
+    obj_bottom = y - height // 2 - 20
     obj_top = y + height // 2
 
     # AABB 충돌 검사
@@ -184,7 +198,7 @@ def add_resource_to_pot(item):
     최대 3개까지만 추가할 수 있습니다.
     성공하면 True, 실패하면 False를 반환합니다.
     """
-    global pot_resources
+    global pot_resources, crafting_timer
     if len(pot_resources) >= MAX_POT_RESOURCES:
         print(f'Pot가 가득 찼습니다! (최대 {MAX_POT_RESOURCES}개)')
         return False
@@ -192,6 +206,12 @@ def add_resource_to_pot(item):
     pot_resources.append(item)
     item_name = getattr(item, 'name', None) or getattr(item, 'filename', str(item))
     print(f'Pot에 {item_name} 추가됨! (현재 리소스: {len(pot_resources)}/{MAX_POT_RESOURCES}개)')
+
+    # 3개가 모이면 타이머 시작
+    if len(pot_resources) == MAX_POT_RESOURCES:
+        crafting_timer = 0.0
+        print('제작 시작! 2초 후 완성됩니다...')
+
     return True
 
 
