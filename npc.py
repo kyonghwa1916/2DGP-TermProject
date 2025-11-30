@@ -88,8 +88,10 @@ class NPC:
         """아이템을 받아서 호감도 증가"""
         item_name = getattr(item, 'name', 'unknown')
 
-        # green_1 아이템은 호감도 3 상승
-        if item_name == 'green_1':
+        # 아이템별 호감도 증가량
+        if item_name == 'red_1':
+            heart_increase = 5
+        elif item_name == 'green_1':
             heart_increase = 3
         else:
             heart_increase = 1
