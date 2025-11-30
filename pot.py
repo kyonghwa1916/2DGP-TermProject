@@ -79,12 +79,10 @@ crafting_delay = 2.0  # 2초
 RECIPES = {
     # apple + grape + banana -> blue_1
     frozenset(['apple', 'grape', 'banana']): 'blue_1.png',
-    # apple + apple + apple -> red_1
-    frozenset(['apple', 'apple', 'apple']): 'red_1.png',
-    # grape + grape + grape -> purple_1
-    frozenset(['grape', 'grape', 'grape']): 'purple_1.png',
-    # peach + peach + peach -> orange_1
-    frozenset(['peach', 'peach', 'peach']): 'orange_1.png',
+    # grape + grape + grape -> green_1
+    frozenset(['grape', 'grape', 'grape']): 'green_1.png',
+    # peach + peach + peach -> red_1
+    frozenset(['peach', 'peach', 'peach']): 'red_1.png',
 }
 
 

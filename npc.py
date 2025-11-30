@@ -86,10 +86,19 @@ class NPC:
 
     def receive_item(self, item):
         """아이템을 받아서 호감도 증가"""
-        self.heart += 1
+        item_name = getattr(item, 'name', 'unknown')
+
+        # green_1 아이템은 호감도 3 상승
+        if item_name == 'green_1':
+            heart_increase = 3
+        else:
+            heart_increase = 1
+
+        self.heart += heart_increase
+        self.heart_increase = heart_increase  # 표시용
         self.message_type = "heart"
-        print('NPC가 {} 아이템을 받았습니다. Heart: {}'.format(
-            getattr(item, 'name', 'unknown'), self.heart))
+        print('NPC가 {} 아이템을 받았습니다. Heart +{} (현재: {})'.format(
+            item_name, heart_increase, self.heart))
 
     def draw(self, x=None, y=None, scale=1.0):
         """NPC를 그립니다. 좌표를 주지 않으면 인스턴스의 x,y를 사용합니다.
@@ -108,7 +117,8 @@ class NPC:
         if self.show_message and self.font:
             if self.message_type == "heart":
                 # 호감도 메시지 표시 (2줄)
-                self.font.draw(dx - 40, dy + 70, "heart +1", (255, 255, 255))
+                heart_inc = getattr(self, 'heart_increase', 1)
+                self.font.draw(dx - 40, dy + 70, "heart +{}".format(heart_inc), (255, 255, 255))
                 self.font.draw(dx - 50, dy + 50, "current heart : {}".format(self.heart), (255, 255, 255))
             else:
                 # 기본 메시지 표시
