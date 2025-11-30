@@ -156,11 +156,14 @@ def update_pots():
     if crafting_timer is not None:
         crafting_timer += 0.05  # main.py의 delay(0.05)와 동일
 
-        # 2초가 지나면 아이템 삭제
+        # 2초가 지나면 아이템 삭제 및 blue_1 생성
         if crafting_timer >= crafting_delay:
-            print('제작 완료! 아이템이 사라집니다.')
+            print('제작 완료! blue_1 아이템이 생성됩니다.')
             pot_resources = []
             crafting_timer = None
+            return 'create_blue_1'  # blue_1 생성 신호
+
+    return None
 
 
 def check_pot_collision(x, y, width, height):
@@ -170,9 +173,9 @@ def check_pot_collision(x, y, width, height):
     충돌하면 True, 아니면 False를 반환합니다.
     """
     # 전달받은 객체의 바운딩 박스 계산
-    obj_left = x - width // 2
-    obj_right = x + width // 2 - 20
-    obj_bottom = y - height // 2 - 20
+    obj_left = x - width // 2 + 30
+    obj_right = x + width // 2 - 30
+    obj_bottom = y - height // 2
     obj_top = y + height // 2
 
     # AABB 충돌 검사

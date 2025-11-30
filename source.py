@@ -17,8 +17,10 @@ NPC_INTERACTION_RADIUS = 80  # NPC와의 상호작용 반경
 # 모듈 전역 리소스(초기화 시 설정됨)
 # witch 인스턴스(초기화 시 설정됨)
 witch = None
-# world_items: 화면에 놓인 Item/Fruit 인스턴스 목록
+# world_items: 화면에 놓인 Item/Fruit 인스턴스 목록 (map 맵용)
 world_items = []
+# pot_world_items: pot 맵에 놓인 Item 목록
+pot_world_items = []
 # npcs: 화면에 배치된 NPC 인스턴스 목록
 npcs = []
 # 이동 플래그
@@ -375,9 +377,25 @@ def update():
             respawn_world_items()
             print('맵이 map으로 전환되었습니다! 아이템이 재생성되었습니다.')
 
-    # pot 맵 애니메이션 업데이트
+    # pot 맵 애니메이션 및 제작 업데이트
     if current_map == 'pot':
-        pot.update_pots()
+        result = pot.update_pots()
+        # blue_1 아이템 생성
+        if result == 'create_blue_1':
+            try:
+                from item import Item
+                blue = Item.from_filename('blue_1.png', load_image_now=True)
+                # pot 하단의 랜덤 위치에 스폰
+                import random
+                # pot 하단 영역: x는 pot 주변, y는 pot 아래쪽
+                spawn_x = random.randint(pot.POT_X - 100, pot.POT_X + 100)
+                spawn_y = random.randint(100, 200)  # pot 하단 영역
+                blue.x = spawn_x
+                blue.y = spawn_y
+                pot_world_items.append(blue)
+                print(f'blue_1 아이템이 pot 하단에 생성되었습니다! (위치: {spawn_x}, {spawn_y})')
+            except Exception as ex:
+                print(f'blue_1 생성 중 오류: {ex}')
 
     # 월드 아이템 위치는 고정(줍기/버리기 시에만 변경됨)
 
@@ -399,7 +417,7 @@ def update():
 
     # --- 충돌 기반 자동 획득 처리 ---
     # witch 주변의 월드 아이템을 검사하여 거리 <= PICKUP_RADIUS이면 자동으로 인벤토리에 담습니다.
-    if witch is not None and world_items:
+    if witch is not None and current_map == 'map' and world_items:
         for it in list(world_items):
             try:
                 dx = it.x - witch.x
@@ -418,6 +436,26 @@ def update():
                     continue
                 # 성공적으로 인벤토리에 담았으면 월드에서 제거 및 콘솔에 출력
                 remove_world_item(it)
+                name = getattr(it, 'name', None) or getattr(it, 'filename', str(it))
+                print('{} 획득'.format(name))
+
+    # pot 맵에서의 아이템 획득 처리
+    if witch is not None and current_map == 'pot' and pot_world_items:
+        for it in list(pot_world_items):
+            try:
+                dx = it.x - witch.x
+                dy = it.y - witch.y
+            except Exception:
+                continue
+            dist = math.hypot(dx, dy)
+            if dist <= PICKUP_RADIUS:
+                try:
+                    idx = witch.add_to_inventory(it)
+                except ValueError:
+                    print('인벤토리 가득: 아이템을 획득할 수 없습니다')
+                    continue
+                # 성공적으로 인벤토리에 담았으면 pot_world_items에서 제거
+                pot_world_items.remove(it)
                 name = getattr(it, 'name', None) or getattr(it, 'filename', str(it))
                 print('{} 획득'.format(name))
 
@@ -487,10 +525,16 @@ def render():
         pot.draw_pots()
         # pot에 투입된 아이템들 그리기
         pot.draw_pot_resources()
+        # pot 맵의 월드 아이템 그리기
+        for it in list(pot_world_items):
+            try:
+                scale = getattr(it, 'draw_scale', 1.0)
+                it.draw(scale=scale)
+            except Exception:
+                pass
         # pot의 arrow가 활성화되어 있으면 그리기
         if pot.arrow_active:
             pot.draw_arrow()  # y축 회전된 arrow 그리기
-        # pot 맵에서는 world_items와 npcs를 그리지 않음
 
     # witch를 맨 나중에 그리기 (최상단) - 모든 맵에서 표시
     if witch:
