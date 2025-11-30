@@ -227,7 +227,7 @@ def init(width=800, height=600):
     npcs = []
     try:
         girl1 = NPC.from_filename('girl1_idle.png', load_image_now=True)
-        girl1.x = 700
+        girl1.x = 600
         girl1.y = 300
         npcs.append(girl1)
     except FileNotFoundError:
