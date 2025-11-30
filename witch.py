@@ -37,6 +37,10 @@ class Witch:
         self.face_dir = 1
         # 이동 속도 (픽셀/프레임)
         self.speed = 5
+        # 달리기 상태
+        self.is_running = False
+        # 애니메이션 업데이트 카운터
+        self.frame_counter = 0
 
         # 인벤토리: 15칸 고정 (None은 빈 슬롯)
         self.inventory = [None] * 10
@@ -50,8 +54,19 @@ class Witch:
         self.slot_offsets = {i: (20, 0) for i in range(len(self.inventory))}
 
     def update(self):
-        # 애니메이션 프레임 갱신
-        self.frame = (self.frame + 1) % 8
+        # 애니메이션 프레임 갱신 (달릴 때는 더 빠르게)
+        self.frame_counter += 1
+
+        if self.is_running:
+            # 달릴 때는 2배 빠르게 (매 프레임마다)
+            if self.frame_counter >= 1:
+                self.frame = (self.frame + 1) % 8
+                self.frame_counter = 0
+        else:
+            # 걸을 때는 기본 속도 (2프레임마다 1번)
+            if self.frame_counter >= 2:
+                self.frame = (self.frame + 1) % 8
+                self.frame_counter = 0
 
     def move(self, dx, dy):
         """외부에서 호출하는 이동 메서드: dx,dy는 픽셀 단위 이동량입니다."""

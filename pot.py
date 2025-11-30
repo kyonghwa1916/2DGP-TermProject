@@ -175,7 +175,7 @@ def check_pot_collision(x, y, width, height):
     # 전달받은 객체의 바운딩 박스 계산
     obj_left = x - width // 2 + 30
     obj_right = x + width // 2 - 30
-    obj_bottom = y - height // 2
+    obj_bottom = y - height // 2 + 10
     obj_top = y + height // 2
 
     # AABB 충돌 검사

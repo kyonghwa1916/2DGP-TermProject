@@ -28,6 +28,8 @@ move_up = False
 move_down = False
 move_left = False
 move_right = False
+# 달리기 플래그
+is_shift_pressed = False
 
 # Arrow 설정
 arrow_image = None
@@ -233,7 +235,7 @@ def init(width=800, height=600):
 
 def handle_events():
     """이벤트 처리: 종료 이벤트가 감지되면 False를 반환합니다."""
-    global move_up, move_down, move_left, move_right, game_state
+    global move_up, move_down, move_left, move_right, game_state, is_shift_pressed
 
     events = get_events()
     for e in events:
@@ -254,6 +256,11 @@ def handle_events():
                 move_left = True
             elif e.key == SDLK_RIGHT or e.key == SDLK_d:
                 move_right = True
+            # Shift 키: 달리기
+            elif e.key == SDLK_LSHIFT or e.key == SDLK_RSHIFT:
+                is_shift_pressed = True
+                if witch is not None:
+                    witch.is_running = True
             # 숫자키(0~9) 입력: 선택 슬롯 변경
             elif e.key in (SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9):
                 key_to_index = {
@@ -313,6 +320,11 @@ def handle_events():
                 move_left = False
             elif e.key == SDLK_RIGHT or e.key == SDLK_d:
                 move_right = False
+            # Shift 키를 뗄 때: 달리기 종료
+            elif e.key == SDLK_LSHIFT or e.key == SDLK_RSHIFT:
+                is_shift_pressed = False
+                if witch is not None:
+                    witch.is_running = False
     return True
 
 
@@ -334,8 +346,10 @@ def update():
         length = math.hypot(vx, vy)
         nx = vx / length
         ny = vy / length
-        dx = nx * witch.speed
-        dy = ny * witch.speed
+        # 달릴 때는 속도 2배 증가
+        current_speed = witch.speed * 2 if witch.is_running else witch.speed
+        dx = nx * current_speed
+        dy = ny * current_speed
 
         # 이동 전 위치 저장
         prev_x = witch.x
