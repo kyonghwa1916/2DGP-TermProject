@@ -48,6 +48,9 @@ class Item:
         self.x = 0
         self.y = 0
 
+        # 아이템 타입 (NPC에게 전달 가능한 item)
+        self.item_type = 'item'
+
     def load(self):
         """이미지를 로드합니다. open_canvas() 이후에 호출해야 안전합니다."""
         if self.image is not None:

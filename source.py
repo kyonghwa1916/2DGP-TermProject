@@ -277,16 +277,20 @@ def handle_events():
                     # 게임 상태가 아니면 무시
                     pass
                 elif current_map == 'pot' and witch is not None:
-                    # pot 맵에서 E키: pot 근처에서 아이템 투입
+                    # pot 맵에서 E키: pot 근처에서 source 투입
                     if pot.check_near_pot(witch.x, witch.y):
                         # 현재 선택된 슬롯의 아이템 가져오기
                         selected_idx = witch.get_selected_slot()
                         item = witch.get_item(selected_idx)
                         if item is not None:
-                            # pot에 아이템 추가 (성공하면 True, 실패하면 False)
-                            if pot.add_resource_to_pot(item):
-                                # 성공했으면 witch 인벤토리에서 아이템 제거
-                                witch.remove_from_inventory(selected_idx)
+                            # source 타입만 pot에 투입 가능
+                            if getattr(item, 'item_type', None) == 'source':
+                                # pot에 아이템 추가 (성공하면 True, 실패하면 False)
+                                if pot.add_resource_to_pot(item):
+                                    # 성공했으면 witch 인벤토리에서 아이템 제거
+                                    witch.remove_from_inventory(selected_idx)
+                            else:
+                                print('pot에는 source만 투입할 수 있습니다')
                         else:
                             print('들고 있는 아이템이 없습니다')
                 elif current_map == 'map' and witch is not None and npcs:
@@ -297,16 +301,20 @@ def handle_events():
                             dx = npc.x - witch.x
                             dy = npc.y - witch.y
                             dist = math.hypot(dx, dy)
-                            # NPC 근처에서 e키를 누르면 아이템 전달
+                            # NPC 근처에서 e키를 누르면 item 전달
                             if dist <= NPC_INTERACTION_RADIUS:
                                 # 현재 선택된 슬롯의 아이템 가져오기
                                 selected_idx = witch.get_selected_slot()
                                 item = witch.get_item(selected_idx)
                                 if item is not None:
-                                    # NPC에게 아이템 전달
-                                    npc.receive_item(item)
-                                    # witch 인벤토리에서 아이템 제거
-                                    witch.remove_from_inventory(selected_idx)
+                                    # item 타입만 NPC에게 전달 가능
+                                    if getattr(item, 'item_type', None) == 'item':
+                                        # NPC에게 아이템 전달
+                                        npc.receive_item(item)
+                                        # witch 인벤토리에서 아이템 제거
+                                        witch.remove_from_inventory(selected_idx)
+                                    else:
+                                        print('NPC에게는 item만 전달할 수 있습니다')
                                 else:
                                     print('들고 있는 아이템이 없습니다')
                         except Exception as ex:
@@ -394,22 +402,24 @@ def update():
     # pot 맵 애니메이션 및 제작 업데이트
     if current_map == 'pot':
         result = pot.update_pots()
-        # blue_1 아이템 생성
-        if result == 'create_blue_1':
+        # 아이템 생성
+        if result and result.startswith('create_item:'):
             try:
+                # 결과 아이템 파일명 추출
+                item_filename = result.split(':', 1)[1]
                 from item import Item
-                blue = Item.from_filename('blue_1.png', load_image_now=True)
+                new_item = Item.from_filename(item_filename, load_image_now=True)
                 # pot 하단의 랜덤 위치에 스폰
                 import random
                 # pot 하단 영역: x는 pot 주변, y는 pot 아래쪽
                 spawn_x = random.randint(pot.POT_X - 100, pot.POT_X + 100)
                 spawn_y = random.randint(100, 200)  # pot 하단 영역
-                blue.x = spawn_x
-                blue.y = spawn_y
-                pot_world_items.append(blue)
-                print(f'blue_1 아이템이 pot 하단에 생성되었습니다! (위치: {spawn_x}, {spawn_y})')
+                new_item.x = spawn_x
+                new_item.y = spawn_y
+                pot_world_items.append(new_item)
+                print(f'{item_filename} 아이템이 pot 하단에 생성되었습니다! (위치: {spawn_x}, {spawn_y})')
             except Exception as ex:
-                print(f'blue_1 생성 중 오류: {ex}')
+                print(f'아이템 생성 중 오류: {ex}')
 
     # 월드 아이템 위치는 고정(줍기/버리기 시에만 변경됨)
 

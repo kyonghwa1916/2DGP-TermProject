@@ -67,6 +67,9 @@ class Fruit:
         self.w = None
         self.h = None
 
+        # 아이템 타입 (pot에 투입 가능한 source)
+        self.item_type = 'source'
+
     def _ensure_image_loaded(self):
         # 이미지가 이미 로드되어 있으면 그대로 사용
         if self.image is not None:

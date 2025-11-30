@@ -74,6 +74,19 @@ ITEM_DISPLAY_SIZE = 50
 crafting_timer = None
 crafting_delay = 2.0  # 2초
 
+# 레시피 정의 (재료 조합 -> 결과 아이템)
+# 재료는 name으로 구분하며, 순서 무관
+RECIPES = {
+    # apple + grape + banana -> blue_1
+    frozenset(['apple', 'grape', 'banana']): 'blue_1.png',
+    # apple + apple + apple -> red_1
+    frozenset(['apple', 'apple', 'apple']): 'red_1.png',
+    # grape + grape + grape -> purple_1
+    frozenset(['grape', 'grape', 'grape']): 'purple_1.png',
+    # peach + peach + peach -> orange_1
+    frozenset(['peach', 'peach', 'peach']): 'orange_1.png',
+}
+
 
 def load_tiles():
     """타일 이미지를 로드합니다."""
@@ -156,12 +169,21 @@ def update_pots():
     if crafting_timer is not None:
         crafting_timer += 0.05  # main.py의 delay(0.05)와 동일
 
-        # 2초가 지나면 아이템 삭제 및 blue_1 생성
+        # 2초가 지나면 아이템 제작
         if crafting_timer >= crafting_delay:
-            print('제작 완료! blue_1 아이템이 생성됩니다.')
+            # 레시피 확인
+            resource_names = [getattr(item, 'name', 'unknown') for item in pot_resources]
+            recipe_key = frozenset(resource_names)
+
+            # 레시피에 맞는 아이템 찾기
+            result_item = RECIPES.get(recipe_key, 'blue_1.png')  # 기본값은 blue_1
+
+            print(f'제작 완료! {result_item} 아이템이 생성됩니다.')
+            print(f'사용된 재료: {resource_names}')
+
             pot_resources = []
             crafting_timer = None
-            return 'create_blue_1'  # blue_1 생성 신호
+            return f'create_item:{result_item}'  # 생성할 아이템 파일명 반환
 
     return None
 
