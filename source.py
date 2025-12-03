@@ -93,11 +93,17 @@ def respawn_world_items(width=800, height=600):
         # 실패 시 마지막으로 생성한 값을 반환
         return rx, ry
 
-    # 생성할 과일 목록: (index, forced_name)
+    # 생성할 과일 목록: (index, forced_name) - 총 10개
     fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
                         (3, 'grape'),     # fruit_003 -> grape
                         (7, 'banana'),    # fruit_007 -> banana
-                        (12, 'peach') ]   # fruit_012 -> peach
+                        (12, 'peach'),    # fruit_012 -> peach
+                        (0, None),        # apple 추가
+                        (3, 'grape'),     # grape 추가
+                        (7, 'banana'),    # banana 추가
+                        (12, 'peach'),    # peach 추가
+                        (0, None),        # apple 추가
+                        (3, 'grape') ]    # grape 추가
 
     # avoid list: 우선 witch 위치를 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
     avoid = [(witch.x, witch.y)]
@@ -115,12 +121,6 @@ def respawn_world_items(width=800, height=600):
         except FileNotFoundError:
             # 파일이 없으면 그냥 넘김
             pass
-
-    try:
-        blue = Item.from_filename('blue_1.png', load_image_now=True)
-        spawn_world_item(blue, witch.x - 50, witch.y)
-    except FileNotFoundError:
-        pass
 
     # 실제 리소스 폴더의 파일명 대소문자에 맞게 지정
 # --- 공개 API: init / handle_events / update / render / cleanup ---
@@ -194,11 +194,17 @@ def init(width=800, height=600):
         # 실패 시 마지막으로 생성한 값을 반환
         return rx, ry
 
-    # 생성할 과일 목록: (index, forced_name)
+    # 생성할 과일 목록: (index, forced_name) - 총 10개
     fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
                         (3, 'grape'),     # fruit_003 -> grape
                         (7, 'banana'),    # fruit_007 -> banana
-                        (12, 'peach') ]   # fruit_012 -> peach
+                        (12, 'peach'),    # fruit_012 -> peach
+                        (0, None),        # apple 추가
+                        (3, 'grape'),     # grape 추가
+                        (7, 'banana'),    # banana 추가
+                        (12, 'peach'),    # peach 추가
+                        (0, None),        # apple 추가
+                        (3, 'grape') ]    # grape 추가
 
     # avoid list: 우선 witch 위치을 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
     avoid = [(witch.x, witch.y)]
@@ -216,12 +222,6 @@ def init(width=800, height=600):
         except FileNotFoundError:
             # 파일이 없으면 그냥 넘김
             pass
-
-    try:
-        blue = Item.from_filename('blue_1.png', load_image_now=True)
-        spawn_world_item(blue, witch.x - 50, witch.y)
-    except FileNotFoundError:
-        pass
 
     # NPC 초기화
     npcs = []
