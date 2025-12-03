@@ -520,9 +520,15 @@ def update():
                 # 거리가 가까우면 메시지 표시
                 if is_near:
                     npc.show_message = True
-                    # 멀었다가 다시 가까워지면 메시지 타입 초기화
+                    # 멀었다가 다시 가까워지면 메시지 타입 결정
                     if not npc.was_near:
-                        npc.message_type = "default"
+                        # 호감도가 5 이상이고 힌트를 아직 표시하지 않았으면 힌트 표시
+                        if npc.heart >= 5 and not npc.hint_shown:
+                            npc.message_type = "hint"
+                            npc.hint_shown = True
+                            print('NPC 힌트: Try Only Grapes')
+                        else:
+                            npc.message_type = "default"
                 else:
                     npc.show_message = False
 
