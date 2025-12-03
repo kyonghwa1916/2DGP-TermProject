@@ -8,6 +8,7 @@ from npc import NPC
 import map as tilemap
 import pot
 import startpage
+import endpage
 import random
 
 # 상수
@@ -40,7 +41,7 @@ arrow_active = True  # arrow가 밟히면 False
 # 맵 상태 ('map' 또는 'pot')
 current_map = 'map'
 
-# 게임 상태 ('startpage' 또는 'game')
+# 게임 상태 ('startpage', 'game', 'endpage')
 game_state = 'startpage'
 
 
@@ -62,6 +63,13 @@ def spawn_world_item(item, x, y):
 def remove_world_item(item):
     if item in world_items:
         world_items.remove(item)
+
+
+def end_game():
+    """게임을 엔딩 페이지로 전환합니다."""
+    global game_state
+    game_state = 'endpage'
+    print('게임 종료! 엔딩 페이지로 전환됩니다.')
 
 
 def respawn_world_items(width=800, height=600):
@@ -133,6 +141,8 @@ def init(width=800, height=600):
 
     # 시작 페이지 로드
     startpage.load_startpage()
+    # 엔딩 페이지 로드
+    endpage.load_endpage()
     game_state = 'startpage'
 
     # 타일맵 초기화
@@ -248,6 +258,9 @@ def handle_events():
             elif e.key == SDLK_e and game_state == 'startpage':
                 game_state = 'game'
                 print('게임 시작!')
+            # Q키를 누르면 엔딩 페이지로 전환 (게임 중일 때만)
+            elif e.key == SDLK_q and game_state == 'game':
+                end_game()
             elif e.key == SDLK_UP or e.key == SDLK_w:
                 move_up = True
             elif e.key == SDLK_DOWN or e.key == SDLK_s:
@@ -340,8 +353,8 @@ def update():
     global witch, world_items, move_up, move_down, move_left, move_right
     global arrow_active, current_map, game_state
 
-    # 시작 페이지 상태에서는 업데이트하지 않음
-    if game_state == 'startpage':
+    # 시작 페이지 또는 엔딩 페이지 상태에서는 업데이트하지 않음
+    if game_state == 'startpage' or game_state == 'endpage':
         return
 
     if witch:
@@ -515,6 +528,12 @@ def render():
     # 시작 페이지 상태일 때는 시작 페이지만 표시
     if game_state == 'startpage':
         startpage.draw_startpage()
+        update_canvas()
+        return
+
+    # 엔딩 페이지 상태일 때는 엔딩 페이지만 표시
+    if game_state == 'endpage':
+        endpage.draw_endpage()
         update_canvas()
         return
 
