@@ -44,9 +44,10 @@ class NPC:
 
         # 호감도 시스템
         self.heart = 0
-        self.message_type = "default"  # "default", "heart", "hint"
+        self.message_type = "default"  # "default", "heart", "hint", "hint2"
         self.was_near = False  # 이전 프레임에 가까웠는지 추적
-        self.hint_shown = False  # 힌트 메시지를 한 번만 표시하기 위한 플래그
+        self.hint_shown = False  # 첫 번째 힌트 메시지를 한 번만 표시하기 위한 플래그
+        self.hint2_shown = False  # 두 번째 힌트 메시지를 한 번만 표시하기 위한 플래그
 
         # 폰트 (나중에 로드)
         self.font = None
@@ -124,8 +125,11 @@ class NPC:
                 self.font.draw(dx - 40, dy + 70, "heart +{}".format(heart_inc), (255, 255, 255))
                 self.font.draw(dx - 50, dy + 50, "current heart : {}".format(self.heart), (255, 255, 255))
             elif self.message_type == "hint":
-                # 힌트 메시지 표시
+                # 첫 번째 힌트 메시지 표시
                 self.font.draw(dx - 60, dy + 60, "Try Only Grapes", (255, 255, 0))
+            elif self.message_type == "hint2":
+                # 두 번째 힌트 메시지 표시
+                self.font.draw(dx - 65, dy + 60, "Try Only Peaches", (255, 255, 0))
             else:
                 # 기본 메시지 표시
                 self.font.draw(dx - 50, dy + 60, "Give me Item", (255, 255, 255))

@@ -522,11 +522,16 @@ def update():
                     npc.show_message = True
                     # 멀었다가 다시 가까워지면 메시지 타입 결정
                     if not npc.was_near:
-                        # 호감도가 5 이상이고 힌트를 아직 표시하지 않았으면 힌트 표시
-                        if npc.heart >= 5 and not npc.hint_shown:
+                        # 호감도가 11 이상이고 두 번째 힌트를 아직 표시하지 않았으면 두 번째 힌트 표시
+                        if npc.heart >= 11 and not npc.hint2_shown:
+                            npc.message_type = "hint2"
+                            npc.hint2_shown = True
+                            print('NPC 힌트 2: Try Only Peaches')
+                        # 호감도가 5 이상이고 첫 번째 힌트를 아직 표시하지 않았으면 첫 번째 힌트 표시
+                        elif npc.heart >= 5 and not npc.hint_shown:
                             npc.message_type = "hint"
                             npc.hint_shown = True
-                            print('NPC 힌트: Try Only Grapes')
+                            print('NPC 힌트 1: Try Only Grapes')
                         else:
                             npc.message_type = "default"
                 else:
