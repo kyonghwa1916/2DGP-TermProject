@@ -92,8 +92,10 @@ class NPC:
 
         # 아이템별 호감도 증가량
         if item_name == 'red_1':
-            heart_increase = 5
+            heart_increase = 10
         elif item_name == 'green_1':
+            heart_increase = 5
+        elif item_name == 'blue_1':
             heart_increase = 3
         else:
             heart_increase = 1
