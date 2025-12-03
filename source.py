@@ -12,7 +12,7 @@ import endpage
 import random
 
 # 상수
-PICKUP_RADIUS = 48  # 픽셀 단위 충돌/획득 반경
+PICKUP_RADIUS = 60  # 픽셀 단위 충돌/획득 반경 (witch 크기 100x100에 맞춤)
 NPC_INTERACTION_RADIUS = 80  # NPC와의 상호작용 반경
 
 # 모듈 전역 리소스(초기화 시 설정됨)
