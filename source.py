@@ -44,6 +44,10 @@ current_map = 'map'
 # 게임 상태 ('startpage', 'game', 'endpage')
 game_state = 'startpage'
 
+# 엔딩 타이머 (호감도 30 달성 시 2초 후 종료)
+ending_timer = None
+ending_delay = 2.0  # 2초
+
 
 # --- world item helpers ---
 def spawn_world_item(item, x, y):
@@ -351,7 +355,14 @@ def handle_events():
 
 def update():
     global witch, world_items, move_up, move_down, move_left, move_right
-    global arrow_active, current_map, game_state
+    global arrow_active, current_map, game_state, ending_timer
+
+    # 엔딩 타이머 업데이트
+    if ending_timer is not None:
+        ending_timer += 0.05  # main.py의 delay(0.05)와 동일
+        if ending_timer >= ending_delay:
+            # 2초가 지나면 프로그램 종료
+            return False  # 게임 종료 신호
 
     # 시작 페이지 또는 엔딩 페이지 상태에서는 업데이트하지 않음
     if game_state == 'startpage' or game_state == 'endpage':
@@ -517,6 +528,12 @@ def update():
 
                 # 현재 상태를 저장
                 npc.was_near = is_near
+
+                # 호감도가 30 이상이면 엔딩 페이지로 전환
+                if npc.heart >= 30 and game_state == 'game':
+                    print('NPC 호감도 30 달성! 엔딩 페이지로 전환합니다.')
+                    game_state = 'endpage'
+                    ending_timer = 0.0  # 타이머 시작
             except Exception:
                 pass
 

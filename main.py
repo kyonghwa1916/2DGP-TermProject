@@ -10,7 +10,10 @@ def main():
     try:
         while running:
             running = source.handle_events()
-            source.update()
+            update_result = source.update()
+            # update()가 False를 반환하면 게임 종료
+            if update_result == False:
+                running = False
             source.render()
             delay(0.05)
     except KeyboardInterrupt:
