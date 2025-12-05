@@ -11,14 +11,13 @@ class Fruit:
       - load_image_now: True이면 생성 시 load_image를 호출합니다. 테스트용으로 False로 두면 캔버스 없이도 인스턴스 생성 가능.
     """
 
-    # 기본 인덱스->이름 매핑(원하면 확장하세요)
+    # 기본 인덱스->이름 매핑(5가지 과일)
     DEFAULT_NAME_MAP = {
         0: 'apple',
-        1: 'banana',
-        2: 'cherry',
         3: 'grape',
-        4: 'orange',
-        5: 'pear',
+        7: 'banana',
+        12: 'peach',
+        15: 'strawberry',
     }
 
     def __init__(self, index_or_filename, name=None, load_image_now=True):

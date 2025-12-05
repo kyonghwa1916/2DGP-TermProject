@@ -105,27 +105,24 @@ def respawn_world_items(width=800, height=600):
         # 실패 시 마지막으로 생성한 값을 반환
         return rx, ry
 
-    # 생성할 과일 목록: (index, forced_name) - 총 10개
-    fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
-                        (3, 'grape'),     # fruit_003 -> grape
-                        (7, 'banana'),    # fruit_007 -> banana
-                        (12, 'peach'),    # fruit_012 -> peach
-                        (0, None),        # apple 추가
-                        (3, 'grape'),     # grape 추가
-                        (7, 'banana'),    # banana 추가
-                        (12, 'peach'),    # peach 추가
-                        (0, None),        # apple 추가
-                        (3, 'grape') ]    # grape 추가
+    # 5가지 과일 종류 정의: (index, name)
+    fruit_types = [
+        (0, 'apple'),
+        (3, 'grape'),
+        (7, 'banana'),
+        (12, 'peach'),
+        (15, 'strawberry')
+    ]
+
+    # 랜덤하게 10개의 과일 선택 (종류와 개수 모두 랜덤)
+    fruits_to_spawn = [random.choice(fruit_types) for _ in range(10)]
 
     # avoid list: 우선 witch 위치를 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
     avoid = [(witch.x, witch.y)]
     # 또한 이미 스폰된 과일끼리 겹치지 않도록 처리
-    for idx, forced_name in fruits_to_spawn:
+    for idx, fruit_name in fruits_to_spawn:
         try:
-            if forced_name:
-                f = Fruit.from_index(idx, name=forced_name, load_image_now=True)
-            else:
-                f = Fruit.from_index(idx, load_image_now=True)
+            f = Fruit.from_index(idx, name=fruit_name, load_image_now=True)
             rx, ry = random_pos_avoiding(avoid_points=avoid, min_dist=PICKUP_RADIUS + 20)
             spawn_world_item(f, rx, ry)
             # 새로 배치한 위치를 avoid 목록에 추가하여 다음 과일과 충돌 방지
@@ -208,27 +205,24 @@ def init(width=800, height=600):
         # 실패 시 마지막으로 생성한 값을 반환
         return rx, ry
 
-    # 생성할 과일 목록: (index, forced_name) - 총 10개
-    fruits_to_spawn = [ (0, None),        # apple (index 0) 기본 매핑 사용
-                        (3, 'grape'),     # fruit_003 -> grape
-                        (7, 'banana'),    # fruit_007 -> banana
-                        (12, 'peach'),    # fruit_012 -> peach
-                        (0, None),        # apple 추가
-                        (3, 'grape'),     # grape 추가
-                        (7, 'banana'),    # banana 추가
-                        (12, 'peach'),    # peach 추가
-                        (0, None),        # apple 추가
-                        (3, 'grape') ]    # grape 추가
+    # 5가지 과일 종류 정의: (index, name)
+    fruit_types = [
+        (0, 'apple'),
+        (3, 'grape'),
+        (7, 'banana'),
+        (12, 'peach'),
+        (15, 'cherry')
+    ]
+
+    # 랜덤하게 10개의 과일 선택 (종류와 개수 모두 랜덤)
+    fruits_to_spawn = [random.choice(fruit_types) for _ in range(10)]
 
     # avoid list: 우선 witch 위치을 추가하여 과일이 너무 가깝게 스폰되지 않도록 함
     avoid = [(witch.x, witch.y)]
     # 또한 이미 스폰된 과일끼리 겹치지 않도록 처리
-    for idx, forced_name in fruits_to_spawn:
+    for idx, fruit_name in fruits_to_spawn:
         try:
-            if forced_name:
-                f = Fruit.from_index(idx, name=forced_name, load_image_now=True)
-            else:
-                f = Fruit.from_index(idx, load_image_now=True)
+            f = Fruit.from_index(idx, name=fruit_name, load_image_now=True)
             rx, ry = random_pos_avoiding(avoid_points=avoid, min_dist=PICKUP_RADIUS + 20)
             spawn_world_item(f, rx, ry)
             # 새로 배치한 위치를 avoid 목록에 추가하여 다음 과일과 충돌 방지
